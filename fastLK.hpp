@@ -50,6 +50,7 @@ public:
     int in_degree = 0;
     int out_degree = 0;
     int times_visited = 0;
+    string concated_descendant_tip_names = "";
     bool leaf = false;    
     node * parent = this;
     array <double, 4> clv;
@@ -140,8 +141,7 @@ public:
     void Set_model_parameters();
     float Compute_scaling_factor(Matrix4f Q);    
     void Read_reference_sequence();
-    void Compute_loglikelihood_using_standard_pruning_algorithm();
-    void Compute_loglikelihood_using_standard_pruning_algorithm_sites_before_nodes();
+    void Compute_loglikelihood_using_standard_pruning_algorithm();    
     void Compute_loglikelihood_using_fast_pruning_algorithm();
     array <double, 4> Get_clv_for_dna(unsigned char dna_obs);
     void Root_tree_along_edge(node * u, node * v, float dist_from_u); 
@@ -361,66 +361,6 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
         this->root->log_scaling_factor = 0;
 	}
 }
-
-void tree::Compute_loglikelihood_using_standard_pruning_algorithm_sites_before_nodes() {
-    Matrix4f Q = this->Q_GTR;
-    Matrix4f Q_scaled_l; Matrix4f Q_scaled_r;
-    Matrix4f P_l; Matrix4f P_r;
-    float t_l; float t_r;
-	float scaling_factor;
-    node * c_l; node * c_r;
-    unsigned char ch;    
-	double partial_likelihood_l;
-    double partial_likelihood_r;
-    double largest_elem;
-	this->log_likelihood = 0;
-	double site_likelihood;    
-	for (unsigned int site = 0; site < this->character_pattern_weights.size(); site++) {
-    // for (unsigned int site = 0; site < 1; site++) {
-        // this->Reset_log_scaling_factors_and_clvs();
-        for (node * n : this->nodes_for_postorder_traversal) {
-            if (n->leaf) {
-                // set conditional likelihood vector using observed character
-                n->clv = this->Get_clv_for_dna(n->compressed_sequence[site]);
-            } else {                
-                // compute conditional likelihood vector by multiplying partial likelihoods
-                c_l = n->children[0];
-                c_r = n->children[1];
-                t_l = this->Get_undirected_edge_length(n,c_l);
-                t_r = this->Get_undirected_edge_length(n,c_r);
-                Q_scaled_l = Q*t_l; Q_scaled_r = Q*t_r;
-                P_l = Q_scaled_l.exp(); P_r = Q_scaled_r.exp();
-                largest_elem = 0;
-                for (unsigned dna_p = 0; dna_p < 4; dna_p ++) {
-                    partial_likelihood_l = 0; partial_likelihood_r = 0;
-                    for (unsigned dna_c = 0; dna_c < 4; dna_c ++) {
-                        partial_likelihood_l += P_l(dna_p,dna_c) * c_l->clv[dna_c];
-                        partial_likelihood_r += P_r(dna_p,dna_c) * c_r->clv[dna_c];
-                    }
-                    n->clv[dna_p] = partial_likelihood_l * partial_likelihood_r;
-                    if (largest_elem < n->clv[dna_p]) {
-                        largest_elem = n->clv[dna_p];
-                    }
-                }
-                // rescale clvs
-                for (unsigned dna_p = 0; dna_p < 4; dna_p ++) {
-                    n->clv[dna_p] /= largest_elem;
-                }                
-                n->log_scaling_factor += log(largest_elem);
-                n->log_scaling_factor += c_l->log_scaling_factor + c_r->log_scaling_factor;
-                c_l->log_scaling_factor = 0; c_r->log_scaling_factor = 0;
-            }
-        }
-		// assert (this->conditional_likelihood_map.find(this->root) != this->conditional_likelihood_map.end());
-		site_likelihood = 0;
-		for (unsigned char dna = 0; dna < 4; dna++) {			
-			site_likelihood += this->pi_rho[dna] * this->root->clv[dna];
-		}
-		this->log_likelihood += (this->root->log_scaling_factor + log(site_likelihood)) * this->character_pattern_weights[site];
-        this->root->log_scaling_factor = 0;
-	}
-}
-
 
 void tree::Set_leaves() {
     this->leaves.clear();
@@ -713,8 +653,7 @@ void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
     array <unsigned char, 4> ref_nuc_counts;
     int tot_pos = 0;
     for (genome_list_elem * list_elem_root : this->root->genome_list) {
-        n_pos = list_elem_root->n_pos;
-        tot_pos += n_pos;
+        n_pos = list_elem_root->n_pos;        
         dna_r = list_elem_root->dna;
         if (dna_r == 4) {
             for (unsigned char dna = 0; dna < 4; dna ++) {
@@ -735,8 +674,7 @@ void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
                 site_likelihood += pi_rho[dna] * clv_root[dna];
             }
             this->log_likelihood += log(site_likelihood);
-        }
-        cout << "tot pos is " << tot_pos << endl;
+        }        
     }
 }
 
@@ -1293,8 +1231,8 @@ public:
         this->T->reference_file_name = path_to_reference_file;
         this->T->mut_diff_file_name = path_to_mut_diff_file;
         this->T->clv_threshold = clv_threshold;
-        // string workflow_type = "mut_diff";
-        string workflow_type = "standard"; 
+        string workflow_type = "mut_diff";
+        // string workflow_type = "standard"; 
         this->Run_workflow(workflow_type);
     }
 
@@ -1314,8 +1252,7 @@ void fastLK_overview::Run_workflow(string workflow_type){
     if (workflow_type == "standard") {
         this->T->Add_fasta_sequences();
         this->T->Compress_sequences();
-        this->T->Compute_loglikelihood_using_standard_pruning_algorithm();
-        // this->T->Compute_loglikelihood_using_standard_pruning_algorithm_sites_before_nodes();
+        this->T->Compute_loglikelihood_using_standard_pruning_algorithm();        
         cout << "log likelihood score computed using standard pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
     } else if (workflow_type == "mut_diff") {
         this->T->Add_mut_diff_sequences();
