@@ -341,6 +341,7 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
     unsigned char ch;    
 	double partial_likelihood_l;
     double partial_likelihood_r;
+    double log_likelihood_contri_from_root_seq = 0;
     double largest_elem;
 	this->log_likelihood = 0;
 	double site_likelihood;
@@ -388,6 +389,8 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 		for (unsigned char dna = 0; dna < 4; dna++) {			
 			site_likelihood += this->pi_rho[dna] * this->root->clv[dna];
 		}
+        log_likelihood_contri_from_root_seq += log(site_likelihood) * this->character_pattern_weights[site];
+        cout << "log_likelihood_contri_from_root_seq\t" << setprecision(8) << log_likelihood_contri_from_root_seq << endl;
 		this->log_likelihood += (this->root->log_scaling_factor + log(site_likelihood)) * this->character_pattern_weights[site];
         this->root->log_scaling_factor = 0;
 	}
@@ -754,6 +757,7 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
 
 void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
     this->log_likelihood = this->root->log_scaling_factor;
+    double log_likelihood_contri_from_root_seq = this->log_likelihood;
     int n_pos; unsigned char dna_r;
     array <double, 4> clv_root;
     double site_likelihood;
@@ -762,20 +766,21 @@ void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
     for (genome_list_elem * list_elem_root : this->root->genome_list) {
         n_pos = list_elem_root->n_pos;        
         dna_r = list_elem_root->dna;
-        if (dna_r == 4) {
+        if (dna_r == 4) { // reference
             for (unsigned char dna = 0; dna < 4; dna ++) {
                 ref_nuc_counts[dna] = this->cum_ref_nuc_counts_map[list_elem_root->start_pos + list_elem_root->n_pos -1][dna];
                 ref_nuc_counts[dna] -= this->cum_ref_nuc_counts_map[list_elem_root->start_pos -1][dna];
                 this->log_likelihood += ref_nuc_counts[dna] * log(pi_rho[dna]);
             }
-        } else {
-            if (list_elem_root->dna > 4){
-                assert (this->root->clv_for_list_elem.find(list_elem_root) != this->root->clv_for_list_elem.end());
-                clv_root = this->root->clv_for_list_elem[list_elem_root];
-            } else {
+        } else if (dna_r != 5) { // skipping N
+            if (list_elem_root->dna < 4) {
                 clv_root = this->Get_clv_for_dna(list_elem_root->dna);
-            }                        
-            assert (list_elem_root->n_pos == 1);
+            } else if (list_elem_root->dna > 5) {
+                // cout << (int) list_elem_root->dna << endl;
+                if (debug) { assert (this->root->clv_for_list_elem.find(list_elem_root) != this->root->clv_for_list_elem.end()); }
+                clv_root = this->root->clv_for_list_elem[list_elem_root];
+            }
+            if (debug) { assert (list_elem_root->n_pos == 1); }
             site_likelihood = 0;
             for (unsigned char dna = 0; dna < 4; dna ++) {
                 site_likelihood += pi_rho[dna] * clv_root[dna];
@@ -783,6 +788,8 @@ void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
             this->log_likelihood += log(site_likelihood);
         }        
     }
+    log_likelihood_contri_from_root_seq = this->log_likelihood - log_likelihood_contri_from_root_seq;
+    cout << "log_likelihood_contri_from_root_seq\t" << setprecision(8) << log_likelihood_contri_from_root_seq << endl;
 }
 
 void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
@@ -826,6 +833,10 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
             // Add genome wide log scaling factors of children to parent
             cout << num_list_elem_left_child << "\t" << num_list_elem_right_child << endl;
             parent->log_scaling_factor = left_child->log_scaling_factor + right_child->log_scaling_factor;
+            if (logging) {
+                cout << parent->name << "\t" << parent->concatenated_descendant_names << "\t";
+                this->log_file << parent->name << "\t" << parent->concatenated_descendant_names << "\t";
+            }
             while (ind_left < num_list_elem_left_child && ind_right < num_list_elem_right_child) {
                 // debug_continue = false;
                 list_elem_parent = new genome_list_elem();
@@ -846,11 +857,7 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
                     cout << "\tstart pos:\t" << (int) list_elem_right_child->start_pos;
                     cout << "\tn pos:\t" << (int) list_elem_right_child->n_pos << endl;
                 }
-                // cout << "log scaling factor for " << parent->name << "\tbefore update is\t" << parent->log_scaling_factor << endl;
-                if (logging) {
-                    cout << parent->name << "\t" << parent->concatenated_descendant_names << "\t";
-                    this->log_file << parent->name << "\t" << parent->concatenated_descendant_names << "\t";
-                }    
+                // cout << "log scaling factor for " << parent->name << "\tbefore update is\t" << parent->log_scaling_factor << endl;                    
                 this->Update_list_elements(parent, left_child, right_child, list_elem_parent, list_elem_left_child, list_elem_right_child);        
                 // cout << "log scaling factor for " << parent->name << "\tafter update is\t" << parent->log_scaling_factor << endl;    
                 if (parent->parent != parent) {
@@ -909,8 +916,10 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
             // cout << "total log likelihood added to " << parent->name << "\tafter update is\t" << parent->log_scaling_factor << endl;              
             // break;
             // collapse contiguous reference type list elements into a single list element
-            this->Combine_ref_type_list_elements(parent);
-            assert((*(parent->genome_list.end()-1))->start_pos + (*(parent->genome_list.end()-1))->n_pos -1 == GENOME_LENGTH);
+            // this->Combine_ref_type_list_elements(parent);
+            if (debug) {
+                assert((*(parent->genome_list.end()-1))->start_pos + (*(parent->genome_list.end()-1))->n_pos -1 == GENOME_LENGTH);
+            }
             // assert(*(parent->genome_list.end()-1)->start_pos + *(parent->genome_list.end()-1)->n_pos -1 = GENOME_LENGTH);
         }
         // compute total log likelihood score
@@ -956,11 +965,13 @@ void tree::Set_model_parameters() {
     // cout << "GTR rate matrix is " << endl << this->Q_GTR << endl;
     // Set root and compute vertex list for post order traversal
     node * l;
-    if (this->Contains_node("EPI_ISL_1208981")){
-        l = this->Get_node("EPI_ISL_1208981");
-    } else {
-        l = this->leaves[0];
-    }    
+    if (this->debug) {
+        if (this->Contains_node("EPI_ISL_1208981")) {
+                l = this->Get_node("EPI_ISL_1208981");
+            } else {
+                l = this->leaves[0];
+            }
+    }
     // cout << "node for rooting is " << l->name << endl;
     this->Root_tree_along_edge(l, l->neighbors[0], 0.0);
     this->Set_nodes_for_postorder_traversal();
