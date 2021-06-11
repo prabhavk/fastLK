@@ -1095,6 +1095,7 @@ void tree::Read_newick_file(bool rooted) {
     regex sibling_pattern ("\\([^\\(\\)]+\\)");
     smatch cherry_matches;
     bool continue_search = true;
+    float min_length = pow(10,-8);
     while (continue_search) {
         if (regex_search(newick_string, cherry_matches, sibling_pattern)) {
             h_name = "h_" + to_string(this->h_ind);
@@ -1112,6 +1113,9 @@ void tree::Read_newick_file(bool rooted) {
                     boost::split(node_name_and_length, sibling_string, [](char c){return c == ':';});
                     node_name = node_name_and_length[0];
                     length = stof(node_name_and_length[1]);
+                    if (length < min_length) {
+                        length = min_length;
+                    }
                     if (!this->Contains_node(node_name)) {
                         this->Add_node(node_name);
                     }
