@@ -1309,7 +1309,7 @@ void tree::Add_mut_diff_sequences() {
             genome_list_size = n->genome_list.size();
             if (genome_list_size > 1) {
                 list_elem_prev_diff =  n->genome_list[genome_list_size - 2];
-                // cout << (int) list_elem_prev_diff->dna << "\t" << list_elem_prev_diff->n_pos << endl;
+                cout << (int) list_elem_prev_diff->dna << "\t" << list_elem_prev_diff->n_pos << endl;
                 if (debug) {assert (list_elem_prev_diff->dna != 4);}
                 if (list_elem_prev_diff->start_pos + list_elem_prev_diff->n_pos == list_elem_diff->start_pos) {
                     list_elem_ref = n->genome_list[genome_list_size-1];
@@ -1411,12 +1411,13 @@ public:
 };
 
 void fastLK_overview::Run_workflow(string workflow_type){
-
+    bool run = false;
     // Read tree file
     // Add sequences (perform global site pattern compression)    
     this->T->Read_newick_file(false);
     this->T->Set_leaves();
     this->T->Read_reference_sequence();
+    if (run) {
     this->T->Set_model_parameters();    
     if (workflow_type == "standard") {
         this->T->Add_fasta_sequences();
@@ -1428,7 +1429,7 @@ void fastLK_overview::Run_workflow(string workflow_type){
         this->T->Add_mut_diff_sequences();
         for (node * n : this->T->leaves) {
             if (n->clv_for_list_elem.size() > 0) {
-                // cout << n->name << endl;
+                cout << n->name << endl;
             }
         }        
         this->T->Add_ref_nuc_counts_based_on_genome_coordinates();        
@@ -1437,6 +1438,7 @@ void fastLK_overview::Run_workflow(string workflow_type){
     } else if (workflow_type == "debug") {        
         this->T->Debug_combining_genome_ref_elements();
     }    
+    }
 
     // ************************************************ //
     // Compute log likelihood for GTR rate matrix using //
