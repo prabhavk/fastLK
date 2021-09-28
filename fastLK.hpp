@@ -1411,13 +1411,11 @@ public:
 };
 
 void fastLK_overview::Run_workflow(string workflow_type){
-    bool run = false;
     // Read tree file
     // Add sequences (perform global site pattern compression)    
     this->T->Read_newick_file(false);
     this->T->Set_leaves();
     this->T->Read_reference_sequence();
-    if (run) {
     this->T->Set_model_parameters();    
     if (workflow_type == "standard") {
         this->T->Add_fasta_sequences();
@@ -1429,7 +1427,7 @@ void fastLK_overview::Run_workflow(string workflow_type){
         this->T->Add_mut_diff_sequences();
         for (node * n : this->T->leaves) {
             if (n->clv_for_list_elem.size() > 0) {
-                cout << n->name << endl;
+                // cout << n->name << endl;
             }
         }        
         this->T->Add_ref_nuc_counts_based_on_genome_coordinates();        
@@ -1452,6 +1450,5 @@ void fastLK_overview::Run_workflow(string workflow_type){
     // Compute log likelihood for GTR rate matrix using //
     // approximate Felsenstein's pruning algorithm      //
     // ************************************************ //
-}
 
 #endif
