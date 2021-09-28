@@ -816,13 +816,15 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
     int num_list_elem_right_child;
     int end_pos_left; int end_pos_right;
     bool debug_continue = false;
-    bool verbose = false;    
+    bool verbose = true;    
     if (this->logging) {
         cout << "logging is switched on" << endl;
     }
     for (node * parent : this->nodes_for_postorder_traversal) {
-        // cout << parent->name << endl;
-        // cout << "*****" << endl;
+        if (verbose) {
+            cout << parent->name << endl;
+            cout << "*****" << endl;
+        }
         if (!parent->leaf) { // iterate over ancestral nodes
             left_child = parent->children[0];
             right_child = parent->children[1];
@@ -838,6 +840,9 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
                 this->log_file << parent->name << "\t" << parent->concatenated_descendant_names << "\t";
             }
             while (ind_left < num_list_elem_left_child && ind_right < num_list_elem_right_child) {
+                if (verbose) {
+                    cout << "in while loop" << endl;
+                }
                 // debug_continue = false;
                 list_elem_parent = new genome_list_elem();
                 parent->genome_list.push_back(list_elem_parent);
@@ -922,8 +927,14 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
             }
             // assert(*(parent->genome_list.end()-1)->start_pos + *(parent->genome_list.end()-1)->n_pos -1 = GENOME_LENGTH);
         }
-        // compute total log likelihood score
-        this->Compute_log_likelihood_score_for_tree_using_genome_list();
+        // // compute total log likelihood score
+        // if (verbose) {
+        //     cout << "Computing log-likelihood score for tree using genome list" << endl;
+        // }
+        // this->Compute_log_likelihood_score_for_tree_using_genome_list();
+        // if (verbose) {
+        //     cout << "Completed computing log-likelihood score for tree using genome list" << endl;
+        // }
     }        
 }
 
@@ -1431,7 +1442,9 @@ void fastLK_overview::Run_workflow(string workflow_type){
             }
         }        
         this->T->Add_ref_nuc_counts_based_on_genome_coordinates();        
+        cout << "Computing log-likelihood using fast pruning algorithm" << endl;
         this->T->Compute_loglikelihood_using_fast_pruning_algorithm();
+        // cout << "Completed computing log-likelihood score" << endl;
         cout << "log likelihood score computed using fast pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
     } else if (workflow_type == "debug") {        
         this->T->Debug_combining_genome_ref_elements();

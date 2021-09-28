@@ -1,0 +1,86 @@
+IQ-TREE 2.1.2 COVID-edition built Oct 22 2020
+
+Input file name: /project/exaptation/fast_approx_pruning/test_data/test_4a.fa
+User tree file name: /project/exaptation/fast_approx_pruning/test_data/test_4a.fastree
+Type of analysis: tree reconstruction
+Random seed number: 348271
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Bui Quang Minh, Heiko A. Schmidt, Olga Chernomor, Dominik Schrempf,
+Michael D. Woodhams, Arndt von Haeseler, and Robert Lanfear (2020)
+IQ-TREE 2: New models and efficient methods for phylogenetic inference
+in the genomic era. Mol. Biol. Evol., in press.
+https://doi.org/10.1093/molbev/msaa015
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 4 sequences with 29891 nucleotide sites
+Number of constant sites: 29847 (= 99.8528% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 29847 (= 99.8528% of all sites)
+Number of parsimony informative sites: 4
+Number of distinct site patterns: 44
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: GTR
+
+Rate parameter R:
+
+  A-C: 0.0400
+  A-G: 0.3000
+  A-T: 0.1000
+  C-G: 0.0200
+  C-T: 1.0000
+  G-T: 1.0000
+
+State frequencies: (equal frequencies)
+
+Rate matrix Q:
+
+  A   -0.3577   0.03252    0.2439    0.0813
+  C   0.03252   -0.8618   0.01626     0.813
+  G    0.2439   0.01626    -1.073     0.813
+  T    0.0813     0.813     0.813    -1.707
+
+Model of rate heterogeneity: Uniform
+
+USER TREE
+---------
+
+Log-likelihood of the tree: -41696.2382 (s.e. 57.6891)
+Unconstrained log-likelihood (without tree): -60301.1945
+Number of free parameters (#branches + #model parameters): 5
+Akaike information criterion (AIC) score: 83402.4764
+Corrected Akaike information criterion (AICc) score: 83402.4784
+Bayesian information criterion (BIC) score: 83444.0030
+
+Total tree length (sum of branch lengths): 0.0018
+Sum of internal branch lengths: 0.0002 (9.9350% of tree length)
+
+NOTE: Tree is UNROOTED although outgroup taxon 'EPI_ISL_1208981' is drawn at root
+
++-----------------------------------------------------------EPI_ISL_1208981
+|
++----EPI_ISL_1246284
+|
+|       +--EPI_ISL_1246268
++-------|
+        +-------EPI_ISL_1257024
+
+Tree in newick format:
+
+(EPI_ISL_1208981:0.0012277564,EPI_ISL_1246284:0.0001115801,(EPI_ISL_1246268:0.0000755093,EPI_ISL_1257024:0.0001660964):0.0001743930);
+
+TIME STAMP
+----------
+
+Date and time: Thu Sep 23 20:42:06 2021
+Total CPU time used: 0.007795 seconds (0h:0m:0s)
+Total wall-clock time used: 0.104774 seconds (0h:0m:0s)
+
