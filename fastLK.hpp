@@ -818,7 +818,7 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
     bool debug_continue = false;
     bool verbose = true;    
     if (this->logging) {
-        cout << "logging is switched on" << endl;
+        cout << "logging is switched on here" << endl;
     }
     for (node * parent : this->nodes_for_postorder_traversal) {
         if (verbose) {
