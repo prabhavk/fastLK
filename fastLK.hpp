@@ -188,8 +188,8 @@ public:
     tree (){
         // Only hardcoded value should be set here
         this->Populate_DNA_to_char_map();
-        root = new node("h_root");
-        this->node_list["h_root"] = root;         
+        // root = new node("h_root");
+        // this->node_list["h_root"] = root;         
     }
 
     ~tree(){
@@ -307,6 +307,8 @@ void tree::Add_directed_edge(node * p, node * c, float edge_length) {
 
 
 void tree::Root_tree_along_edge(node * u, node * v, float dist_from_u) {
+    root = new node("h_root");
+    this->node_list["h_root"] = root;
     pair <node *, node *> edge;
     if (u < v) {
         edge = make_pair(u,v);
