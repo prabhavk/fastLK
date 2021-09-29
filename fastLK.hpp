@@ -372,9 +372,11 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
         cout << "log scaling factors and clvs resetted" << endl;
         for (node * n : this->nodes_for_postorder_traversal) {
             if (n->leaf) {
-                // set conditional likelihood vector using observed character                
-                // cout << "node name is\t" << n->name << endl;
-                // cout << " dna for " << " site " << site << " is " << (int) n->compressed_sequence[site] << endl;
+                // set conditional likelihood vector using observed character  
+                if (verbose) {
+                    cout << "node name is\t" << n->name << endl;
+                    cout << " dna for " << " site " << site << " is " << (int) n->compressed_sequence[site] << endl;
+                }                                              
                 n->clv = this->Get_clv_for_dna(n->compressed_sequence[site]);
             } else {
                 // compute conditional likelihood vector by multiplying partial likelihoods
