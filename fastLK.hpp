@@ -363,11 +363,13 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
     double largest_elem;
 	this->log_likelihood = 0;
 	double site_likelihood;
+    bool verbose = true;
     unsigned int num_char_patterns = this->character_pattern_weights.size();
     cout << "Iterating over character patterns" << endl;
 	for (unsigned int site = 0; site < num_char_patterns; site++) {
     // for (unsigned int site = 0; site < 1; site++) {
         this->Reset_log_scaling_factors_and_clvs();
+        cout << "log scaling factors and clvs resetted" << endl;
         for (node * n : this->nodes_for_postorder_traversal) {
             if (n->leaf) {
                 // set conditional likelihood vector using observed character                
