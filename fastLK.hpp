@@ -1142,12 +1142,11 @@ void tree::Read_newick_file() {
             newick_string = regex_replace(newick_string, sibling_pattern, h_name, regex_constants::format_first_only);
         } else {
             continue_search = false;
-        }
-
-        cout << "Number of edges is " << this->undirected_edge_length_map.size() << endl;
-        cout << "Number of leaves is " << this->leaves.size() << endl;
-        cout << "Number of nodes is " << this->node_list.size() << endl;
+        }        
     }
+    cout << "Number of edges is " << this->undirected_edge_length_map.size() << endl;
+    cout << "Number of leaves is " << this->leaves.size() << endl;
+    cout << "Number of nodes is " << this->node_list.size() << endl;    
 }
 
 // void tree::WriteNewickFile(string tree_file_name, bool rooted) {
