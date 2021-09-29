@@ -1167,9 +1167,11 @@ void tree::Read_newick_file() {
     cout << "Number of nodes is " << num_nodes << endl;    
     if (num_nodes == 2*(num_leaves) -2) {
         this->rooted = false;
+        cout << "Input tree is unrooted" << endl;
     } else {
         assert(num_nodes == 2*(num_leaves) -1);
         this->rooted = true;
+        cout << "Input tree is rooted" << endl;
     }
 }
 
