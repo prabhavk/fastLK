@@ -1008,8 +1008,7 @@ void tree::Set_model_parameters() {
     // }
     // cout << "node for rooting is " << l->name << endl;
     // this->Root_tree_along_edge(l, l->neighbors[0], 0.0);
-    
-    this->Set_nodes_for_postorder_traversal();
+    // this->Set_nodes_for_postorder_traversal();
 }
 
 float tree::Compute_scaling_factor(Matrix4f Q) {
@@ -1117,7 +1116,7 @@ void tree::Read_newick_file() {
     this->leaves.clear();
     cout << "Tree file name is " << tree_file_name << endl;    
     string node_name; string h_name;
-    node * h; node * n;
+    node * h; node * n; node * l;
     float length; float v_length;
     string newick_string;
     string sibling_string;
@@ -1462,7 +1461,7 @@ void fastLK_overview::Run_workflow(string workflow_type){
     // Read tree file
     // Add sequences (perform global site pattern compression)    
     this->T->Read_newick_file();
-    // this->T->Set_leaves();
+    this->T->Set_leaves();
     this->T->Read_reference_sequence();
     if (!this->T->rooted) {
         this->T->Root_unrooted_tree();
