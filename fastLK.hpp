@@ -131,7 +131,7 @@ public:
     int h_ind = 0;
     bool debug = true;
     bool logging = true;    
-    bool rooted = true;
+    bool rooted;
     vector <unsigned char> reference_sequence;
     int num_char_patterns;
     string tree_file_name;
@@ -307,8 +307,8 @@ void tree::Add_directed_edge(node * p, node * c, float edge_length) {
 
 
 void tree::Root_tree_along_edge(node * u, node * v, float dist_from_u) {
-    root = new node("h_root");
-    this->node_list["h_root"] = root;
+    this->root = new node("h_root");
+    this->node_list["h_root"] = this->root;
     pair <node *, node *> edge;
     if (u < v) {
         edge = make_pair(u,v);
@@ -364,6 +364,7 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 	this->log_likelihood = 0;
 	double site_likelihood;
     unsigned int num_char_patterns = this->character_pattern_weights.size();
+    cout << "Iterating over character patterns" << endl;
 	for (unsigned int site = 0; site < num_char_patterns; site++) {
     // for (unsigned int site = 0; site < 1; site++) {
         this->Reset_log_scaling_factors_and_clvs();
