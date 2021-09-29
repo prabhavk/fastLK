@@ -131,6 +131,7 @@ public:
     int h_ind = 0;
     bool debug = true;
     bool logging = true;    
+    bool rooted = true;
     vector <unsigned char> reference_sequence;
     int num_char_patterns;
     string tree_file_name;
@@ -140,7 +141,7 @@ public:
     string reference_file_name;
     string log_file_name;
     ofstream log_file;
-    void Read_newick_file(bool rooted);
+    void Read_newick_file();
     // void WriteNewickFile(string tree_file_name, bool rooted);
     map <string, unsigned char> DNA_to_char;
     map <string, node*> node_list;
@@ -1088,10 +1089,10 @@ float tree::Get_directed_edge_length(node * p, node * c) {
     return (this->directed_edge_length_map[make_pair(p,c)]);
 }
 
-void tree::Read_newick_file(bool rooted) {
-    // Hardcoded rooted to false
-    cout << "Tree file name is " << tree_file_name << endl;
-    rooted = false;
+void tree::Read_newick_file() {
+    // default value for rooted is true
+    this->leaves.clear();
+    cout << "Tree file name is " << tree_file_name << endl;    
     string node_name; string h_name;
     node * h; node * n;
     float length; float v_length;
@@ -1129,19 +1130,23 @@ void tree::Read_newick_file(bool rooted) {
                     }
                     if (!this->Contains_node(node_name)) {
                         this->Add_node(node_name);
+                        this->leaves.push_back(this->Get_node(node_name));
                     }
                     n = this->Get_node(node_name);
                     this->Add_undirected_edge(n, h, length);
                 }
             } else {
                 cerr << "sibling string has not been properly parsed" << endl;
+                // exit(-1);
             }
             newick_string = regex_replace(newick_string, sibling_pattern, h_name, regex_constants::format_first_only);
         } else {
             continue_search = false;
         }
+
         cout << "Number of edges is " << this->undirected_edge_length_map.size() << endl;
-        cout << "Number of vertices is " << this->node_list.size() << endl;
+        cout << "Number of leaves is " << this->leaves.size() << endl;
+        cout << "Number of nodes is " << this->node_list.size() << endl;
     }
 }
 
@@ -1424,7 +1429,7 @@ public:
 void fastLK_overview::Run_workflow(string workflow_type){
     // Read tree file
     // Add sequences (perform global site pattern compression)    
-    this->T->Read_newick_file(false);
+    this->T->Read_newick_file();
     this->T->Set_leaves();
     this->T->Read_reference_sequence();
     this->T->Set_model_parameters();    
