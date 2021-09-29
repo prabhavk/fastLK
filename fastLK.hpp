@@ -369,7 +369,9 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 	for (unsigned int site = 0; site < num_char_patterns; site++) {
     // for (unsigned int site = 0; site < 1; site++) {
         this->Reset_log_scaling_factors_and_clvs();
-        cout << "log scaling factors and clvs resetted" << endl;
+        if (verbose) {
+            cout << "log scaling factors and clvs resetted" << endl;
+        }        
         for (node * n : this->nodes_for_postorder_traversal) {
             if (n->leaf) {
                 // set conditional likelihood vector using observed character  
@@ -413,7 +415,9 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 			site_likelihood += this->pi_rho[dna] * this->root->clv[dna];
 		}
         log_likelihood_contri_from_root_seq += log(site_likelihood) * this->character_pattern_weights[site];
-        cout << "log_likelihood_contri_from_root_seq\t" << setprecision(8) << log_likelihood_contri_from_root_seq << endl;
+        if (verbose) {
+            cout << "log_likelihood_contri_from_root_seq\t" << setprecision(8) << log_likelihood_contri_from_root_seq << endl;
+        }        
 		this->log_likelihood += (this->root->log_scaling_factor + log(site_likelihood)) * this->character_pattern_weights[site];
         this->root->log_scaling_factor = 0;
 	}
