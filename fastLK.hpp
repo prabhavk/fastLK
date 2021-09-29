@@ -143,6 +143,7 @@ public:
     ofstream log_file;
     void Read_newick_file();
     // void WriteNewickFile(string tree_file_name, bool rooted);
+    void Root_unrooted_tree();
     map <string, unsigned char> DNA_to_char;
     map <string, node*> node_list;
     vector <node *> leaves;
@@ -198,6 +199,20 @@ public:
         }
     }
 };
+
+void tree::Root_unrooted_tree(){
+    node * l;
+    if (this->debug) {
+        if (this->Contains_node("EPI_ISL_1208981")) {
+                l = this->Get_node("EPI_ISL_1208981");
+            } else {
+                l = this->leaves[0];
+            }
+    }
+    // cout << "node for rooting is " << l->name << endl;
+    this->Root_tree_along_edge(l, l->neighbors[0], 0.0);
+    this->Set_nodes_for_postorder_traversal();
+}
 
 void tree::Set_descendant_names() {
     node * c_l; node * c_r;
@@ -976,16 +991,17 @@ void tree::Set_model_parameters() {
 
     // cout << "GTR rate matrix is " << endl << this->Q_GTR << endl;
     // Set root and compute vertex list for post order traversal
-    node * l;
-    if (this->debug) {
-        if (this->Contains_node("EPI_ISL_1208981")) {
-                l = this->Get_node("EPI_ISL_1208981");
-            } else {
-                l = this->leaves[0];
-            }
-    }
+    // node * l;
+    // if (this->debug) {
+    //     if (this->Contains_node("EPI_ISL_1208981")) {
+    //             l = this->Get_node("EPI_ISL_1208981");
+    //         } else {
+    //             l = this->leaves[0];
+    //         }
+    // }
     // cout << "node for rooting is " << l->name << endl;
-    this->Root_tree_along_edge(l, l->neighbors[0], 0.0);
+    // this->Root_tree_along_edge(l, l->neighbors[0], 0.0);
+    
     this->Set_nodes_for_postorder_traversal();
 }
 
@@ -1144,9 +1160,17 @@ void tree::Read_newick_file() {
             continue_search = false;
         }        
     }
+    unsigned int num_leaves = this->leaves.size();
+    unsigned int num_nodes = this->node_list.size();
     cout << "Number of edges is " << this->undirected_edge_length_map.size() << endl;
-    cout << "Number of leaves is " << this->leaves.size() << endl;
-    cout << "Number of nodes is " << this->node_list.size() << endl;    
+    cout << "Number of leaves is " << num_leaves << endl;
+    cout << "Number of nodes is " << num_nodes << endl;    
+    if (num_nodes == 2*(num_leaves) -2) {
+        this->rooted = false;
+    } else {
+        assert(num_nodes == 2*(num_leaves) -1);
+        this->rooted = true;
+    }
 }
 
 // void tree::WriteNewickFile(string tree_file_name, bool rooted) {
@@ -1429,8 +1453,11 @@ void fastLK_overview::Run_workflow(string workflow_type){
     // Read tree file
     // Add sequences (perform global site pattern compression)    
     this->T->Read_newick_file();
-    this->T->Set_leaves();
+    // this->T->Set_leaves();
     this->T->Read_reference_sequence();
+    if (!this->T->rooted) {
+        this->T->Root_unrooted_tree();
+    }
     this->T->Set_model_parameters();    
     if (workflow_type == "standard") {
         this->T->Add_fasta_sequences();
