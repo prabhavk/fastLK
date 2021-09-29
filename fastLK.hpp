@@ -363,7 +363,7 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
     double largest_elem;
 	this->log_likelihood = 0;
 	double site_likelihood;
-    bool verbose = true;
+    bool verbose = false;
     unsigned int num_char_patterns = this->character_pattern_weights.size();
     cout << "Iterating over character patterns" << endl;
 	for (unsigned int site = 0; site < num_char_patterns; site++) {
