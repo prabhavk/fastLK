@@ -11,11 +11,13 @@ int main(int argc, char * argv[])
     string path_to_log_file = "";
     string workflow_type = "";
     string path = "";
+    bool verbose_flag_bool;
+    string verbose_flag_string;
     float clv_threshold = 0;
     string path_to_sequence_alignment_file = "";
 
     if (argc < 2) {        
-        cerr << "Usage: " << argv[0] << " -r reference_file -p path -s multiple_sequence_alignment -e clv_threshold -m mutation_diff_file -w workflow_type -t tree_file -l log_file" << endl;
+        cerr << "Usage: " << argv[0] << " -r reference_file -p path -s multiple_sequence_alignment -e clv_threshold -m mutation_diff_file -w workflow_type -t tree_file -l log_file -v verbose_flag" << endl;
         return (-1);
     } else {        
         // parse arguments            
@@ -29,6 +31,16 @@ int main(int argc, char * argv[])
             } else if (strcmp(argv[i], "-s") == 0) {
                 if (i < argc -1) {
                     path_to_sequence_alignment_file = argv[++i];
+                }
+        // verbose flag
+            } else if (strcmp(argv[i], "-v") == 0) {
+                if (i < argc -1) {
+                    verbose_flag_string = argv[++i];
+                    if (strcmp(verbose_flag_string.c_str(), "1") == 0) {
+                        verbose_flag_bool = true;
+                    } else {
+                        verbose_flag_bool = false;
+                    }
                 }
         // path to directory containing input files
             } else if (strcmp(argv[i], "-p") == 0) {
@@ -69,7 +81,7 @@ int main(int argc, char * argv[])
     path_to_tree_file  = path + path_to_tree_file;
     path_to_log_file = path + path_to_log_file;
 
-    fastLK_overview * fastLK_manager = new fastLK_overview(path_to_reference_file, path_to_mut_diff_file, path_to_sequence_alignment_file, path_to_tree_file, path_to_log_file, workflow_type, clv_threshold);
+    fastLK_overview * fastLK_manager = new fastLK_overview(path_to_reference_file, path_to_mut_diff_file, path_to_sequence_alignment_file, path_to_tree_file, path_to_log_file, workflow_type, clv_threshold,verbose_flag_bool);
 
     delete fastLK_manager;
 

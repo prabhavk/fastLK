@@ -55,7 +55,7 @@ class node {
 public:
     vector < node * > neighbors;
     vector < node * > children;
-    bool debug = true;     
+    bool verbose = true;     
     int degree = 0;
     int in_degree = 0;
     int out_degree = 0;
@@ -108,7 +108,7 @@ void node::Set_pos_for_reference_characters() {
                 list_elem->n_pos = this->genome_list[i+1]->start_pos - list_elem->start_pos;
             }
         }
-        if (debug) {assert (list_elem->n_pos > 0);}
+        if (verbose) {assert (list_elem->n_pos > 0);}
     }
 }
 
@@ -129,7 +129,7 @@ public:
     double log_likelihood = 0.0;
     double clv_threshold;
     int h_ind = 0;
-    bool debug = true;
+    bool verbose = true;
     bool logging = true;    
     bool rooted;
     vector <unsigned char> reference_sequence;
@@ -181,7 +181,7 @@ public:
     void Compute_log_likelihood_score_for_tree_using_genome_list();
     array <float, 4> pi_rho;
     // TESTING
-    void Debug_combining_genome_ref_elements();    
+    void verbose_combining_genome_ref_elements();    
 
     // Matrix4f Q_UNREST;
 
@@ -202,7 +202,7 @@ public:
 
 void tree::Root_unrooted_tree(){
     node * l;
-    if (this->debug) {
+    if (this->verbose) {
         if (this->Contains_node("EPI_ISL_1208981")) {
                 l = this->Get_node("EPI_ISL_1208981");
             } else {
@@ -237,7 +237,7 @@ void tree::Reset_log_scaling_factors_and_clvs() {
 
 array <double, 4> tree::Get_clv_for_dna(unsigned char dna_obs) {
     array <double, 4> clv;    
-    // if (debug) {assert (dna_obs < 4); }    
+    // if (verbose) {assert (dna_obs < 4); }    
     clv[0] = 0.0; clv[1] = 0.0; clv[2] = 0.0; clv[3] = 0.0;
     if (dna_obs < 4) { // a, c, g, t
         clv[dna_obs] = 1.0;
@@ -264,7 +264,7 @@ array <double, 4> tree::Get_clv_for_dna(unsigned char dna_obs) {
     } else if (dna_obs == 15) { // v = a, c, g
         clv[0] = 1.0; clv[1] = 1.0; clv[2] = 1.0;
     }        
-    if (debug) {assert(*max_element(clv.begin(),clv.end()) > 0.0);}   
+    if (verbose) {assert(*max_element(clv.begin(),clv.end()) > 0.0);}   
     return (clv);
 }
 
@@ -315,9 +315,12 @@ void tree::Root_tree_along_edge(node * u, node * v, float dist_from_u) {
     } else {
         edge = make_pair(v,u);
     }
-    cout << u->name << " is a leaf with degree " << u->degree << endl;
-    cout << v->name << " is not a leaf with degree " << v->degree << endl;
-    if (debug) {assert(this->undirected_edge_length_map.find(edge) != this->undirected_edge_length_map.end());}    
+    if (this->verbose) {
+        cout << u->name << " is a leaf with degree " << u->degree << endl;
+        cout << v->name << " is not a leaf with degree " << v->degree << endl;
+    }
+
+    if (verbose) {assert(this->undirected_edge_length_map.find(edge) != this->undirected_edge_length_map.end());}    
     vector <node *> nodes_visited;
     vector <node *> nodes_to_visit; 
     nodes_to_visit.push_back(u);
@@ -326,7 +329,7 @@ void tree::Root_tree_along_edge(node * u, node * v, float dist_from_u) {
     nodes_visited.push_back(v);
     float edge_length;
     edge_length = this->Get_undirected_edge_length(u,v);
-    if (debug) {assert(edge_length >= dist_from_u);}
+    if (verbose) {assert(edge_length >= dist_from_u);}
 
     this->Add_directed_edge(this->root,u,dist_from_u);
     this->Add_directed_edge(this->root,v,edge_length - dist_from_u);
@@ -365,7 +368,7 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 	double site_likelihood;
     bool verbose = false;
     unsigned int num_char_patterns = this->character_pattern_weights.size();
-    cout << "Iterating over character patterns" << endl;
+    // cout << "Iterating over character patterns" << endl;
 	for (unsigned int site = 0; site < num_char_patterns; site++) {
     // for (unsigned int site = 0; site < 1; site++) {
         this->Reset_log_scaling_factors_and_clvs();
@@ -431,10 +434,12 @@ void tree::Set_leaves() {
             elem.second->leaf = true;
         }
     }
-    cout << "Number of leaves is " << this->leaves.size() << endl;
+    if (this->verbose) {
+        cout << "Number of leaves is " << this->leaves.size() << endl;
+    }    
 }
 
-void tree::Debug_combining_genome_ref_elements() {
+void tree::verbose_combining_genome_ref_elements() {
     node * n = new node("test");
     unsigned char dna_ref = 4;
     unsigned char dna_diff = 2;
@@ -466,7 +471,7 @@ void tree::Combine_ref_type_list_elements(node * n) {
     bool continue_search_for_elements_to_combine = false;
     vector <genome_list_elem *>::iterator start_pos_iterator = n->genome_list.begin();
     int ind_of_elem_extended;
-    if (debug) {
+    if (verbose) {
         for (int i = 0; i < n->genome_list.size() - 1; i++) {
             assert(n->genome_list[i]->start_pos + n->genome_list[i]->n_pos == n->genome_list[i+1]->start_pos);
         }
@@ -548,7 +553,7 @@ void tree::Combine_ref_type_list_elements(node * n) {
             cout << ", length: " << list_elem->length << endl;        
         }
     }    
-    if (debug) {
+    if (verbose) {
         for (int i = 0; i < n->genome_list.size() - 1; i++) {
             assert(n->genome_list[i]->start_pos + n->genome_list[i]->n_pos == n->genome_list[i+1]->start_pos);
         }
@@ -558,7 +563,7 @@ void tree::Combine_ref_type_list_elements(node * n) {
 void tree::Update_list_elements(node * parent, node * left_child, node * right_child, genome_list_elem * list_elem_parent, genome_list_elem * list_elem_left_child, genome_list_elem * list_elem_right_child) {
     // dna_l and dna_r are characters observed for list_elem_left and list_elem_right        
     int n_pos;
-    if (debug) {assert (list_elem_left_child->start_pos == list_elem_right_child->start_pos);}
+    if (verbose) {assert (list_elem_left_child->start_pos == list_elem_right_child->start_pos);}
     // Set start pos for parent element    
     list_elem_parent->start_pos = list_elem_left_child->start_pos;
     if (list_elem_left_child->n_pos < list_elem_right_child->n_pos) {
@@ -602,7 +607,7 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
             // copy clv if necessary
             if (right_child->clv_for_list_elem.find(list_elem_right_child) != right_child->clv_for_list_elem.end()) {
                 parent->clv_for_list_elem[list_elem_parent] = right_child->clv_for_list_elem[list_elem_right_child];
-                if (debug) {assert(*max_element(parent->clv_for_list_elem[list_elem_parent].begin(),parent->clv_for_list_elem[list_elem_parent].end()) > 0.0);}
+                if (verbose) {assert(*max_element(parent->clv_for_list_elem[list_elem_parent].begin(),parent->clv_for_list_elem[list_elem_parent].end()) > 0.0);}
             }
         }
     } else {
@@ -615,7 +620,7 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
             // copy clv if necessary
             if (left_child->clv_for_list_elem.find(list_elem_left_child) != left_child->clv_for_list_elem.end()) {
                 parent->clv_for_list_elem[list_elem_parent] = left_child->clv_for_list_elem[list_elem_left_child];
-                if (debug) {assert(*max_element(parent->clv_for_list_elem[list_elem_parent].begin(),parent->clv_for_list_elem[list_elem_parent].end()) > 0.0);}
+                if (verbose) {assert(*max_element(parent->clv_for_list_elem[list_elem_parent].begin(),parent->clv_for_list_elem[list_elem_parent].end()) > 0.0);}
             }
         } else {
             // dna_l is not N and dna_r is not N            
@@ -633,7 +638,7 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
                     //     // cout << "clv right child " << dna_r << " is " << clv_right_child[dna] << "\t";
                     //     // cout << "clv parent " << dna << " is " << clv_parent[dna] << endl;
                     // }
-                    if (debug) {assert(n_pos == 1);}
+                    if (verbose) {assert(n_pos == 1);}
                     // set dna of parent as dna of left child
                     list_elem_parent->dna = dna_l;
                     // set branch length of parent as 0 (default)
@@ -679,12 +684,12 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
                         cout << "dna_l is " << int(dna_l) << endl;
                         cout << "clv entry for dna_l is " << left_child->clv_for_list_elem[list_elem_left_child][dna_l] << endl;
                     }
-                    if (debug) {assert(dna_l > 5);}
+                    if (verbose) {assert(dna_l > 5);}
                     clv_left_child = left_child->clv_for_list_elem[list_elem_left_child];
-                    if (debug) {assert(*max_element(clv_left_child.begin(),clv_left_child.end()) > 0.0);}
+                    if (verbose) {assert(*max_element(clv_left_child.begin(),clv_left_child.end()) > 0.0);}
                 } else {
                     // cout << "I'm here now" << endl;
-                    if (debug) {assert(dna_l < 5);}
+                    if (verbose) {assert(dna_l < 5);}
                     if (dna_l < 4) {
                         clv_left_child = this->Get_clv_for_dna(dna_l);
                     } else {
@@ -693,27 +698,27 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
                         // cout << "dna for reference is " << (int) this->reference_sequence[list_elem_parent->start_pos -1] << endl;
                         clv_left_child = this->Get_clv_for_dna(this->reference_sequence[list_elem_parent->start_pos -1]);
                         // cout << "max clv element is " << *max_element(clv_left_child.begin(),clv_left_child.end()) << endl;
-                        if (debug) {assert(*max_element(clv_left_child.begin(),clv_left_child.end()) > 0.0);}
+                        if (verbose) {assert(*max_element(clv_left_child.begin(),clv_left_child.end()) > 0.0);}
                     }
                 }
 
                 if (right_child->clv_for_list_elem.find(list_elem_right_child) != right_child->clv_for_list_elem.end()) {
                     // cout << "****\t" << (int) dna_r << endl; 
-                    if (debug) {assert(dna_r > 5);}
+                    if (verbose) {assert(dna_r > 5);}
                     clv_right_child = right_child->clv_for_list_elem[list_elem_right_child];
-                    if (debug) {assert(*max_element(clv_right_child.begin(),clv_right_child.end()) > 0.0);}
+                    if (verbose) {assert(*max_element(clv_right_child.begin(),clv_right_child.end()) > 0.0);}
                 } else {
-                    if (debug) {assert(dna_r < 5);}
+                    if (verbose) {assert(dna_r < 5);}
                     if (dna_r < 4) {
                         clv_right_child = this->Get_clv_for_dna(dna_r);
                     } else {                        
                         // cout << "dna for reference is " << (int) this->reference_sequence[list_elem_parent->start_pos -1] << endl;
                         clv_right_child = this->Get_clv_for_dna(this->reference_sequence[list_elem_parent->start_pos -1]);
-                        if (debug) {assert(*max_element(clv_right_child.begin(),clv_right_child.end()) > 0.0);}
+                        if (verbose) {assert(*max_element(clv_right_child.begin(),clv_right_child.end()) > 0.0);}
                     }
                 }
-                if (debug) {assert(*max_element(clv_left_child.begin(),clv_left_child.end()) > 0.0);}
-                if (debug) {assert(*max_element(clv_right_child.begin(),clv_right_child.end()) > 0.0);}
+                if (verbose) {assert(*max_element(clv_left_child.begin(),clv_left_child.end()) > 0.0);}
+                if (verbose) {assert(*max_element(clv_right_child.begin(),clv_right_child.end()) > 0.0);}
                 // assert(list_elem_left_child->length > 0);
                 // assert(list_elem_right_child->length > 0);
                 clv_parent[0] = 1.0; clv_parent[1] = 1.0; clv_parent[2] = 1.0; clv_parent[3] = 1.0;
@@ -746,7 +751,7 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
                 // cout << "log_likelihood added here 2" << endl;                
                 parent->log_scaling_factor += log(largest_elem);
                 parent->clv_for_list_elem[list_elem_parent] = clv_parent;
-                if (debug) {assert(*max_element(clv_parent.begin(),clv_parent.end()) > 0.0);}
+                if (verbose) {assert(*max_element(clv_parent.begin(),clv_parent.end()) > 0.0);}
                 // set dna of parent as type "O" if second largest element is larger than 10^-6 (user-defined threshold)
                 num_clv_elems_larger_than_threshold = 0;
                 for (unsigned char dna_p = 0; dna_p < 4; dna_p ++) {
@@ -804,10 +809,10 @@ void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
                 clv_root = this->Get_clv_for_dna(list_elem_root->dna);
             } else if (list_elem_root->dna > 5) {
                 // cout << (int) list_elem_root->dna << endl;
-                if (debug) { assert (this->root->clv_for_list_elem.find(list_elem_root) != this->root->clv_for_list_elem.end()); }
+                if (verbose) { assert (this->root->clv_for_list_elem.find(list_elem_root) != this->root->clv_for_list_elem.end()); }
                 clv_root = this->root->clv_for_list_elem[list_elem_root];
             }
-            if (debug) { assert (list_elem_root->n_pos == 1); }
+            if (verbose) { assert (list_elem_root->n_pos == 1); }
             site_likelihood = 0;
             for (unsigned char dna = 0; dna < 4; dna ++) {
                 site_likelihood += pi_rho[dna] * clv_root[dna];
@@ -842,8 +847,8 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
     int num_list_elem_left_child;
     int num_list_elem_right_child;
     int end_pos_left; int end_pos_right;
-    bool debug_continue = false;
-    bool verbose = true;    
+    bool verbose_continue = false;
+    bool verbose = false;    
     if (this->logging) {
         cout << "logging is switched on here" << endl;
     }
@@ -870,7 +875,7 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
                 if (verbose) {
                     cout << "in while loop" << endl;
                 }
-                // debug_continue = false;
+                // verbose_continue = false;
                 list_elem_parent = new genome_list_elem();
                 parent->genome_list.push_back(list_elem_parent);
                 list_elem_left_child = left_child->genome_list[ind_left];
@@ -919,7 +924,7 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
                     cout << "\tn pos:\t" << (int) list_elem_parent->n_pos << endl;
                     assert (list_elem_parent->n_pos > 0);
                 }
-                if (debug) {assert (list_elem_parent->dna < 17);}
+                if (verbose) {assert (list_elem_parent->dna < 17);}
 
                 if (list_elem_left_child->n_pos == 0) {
                     if (verbose) {
@@ -944,12 +949,12 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
                 cout << "ind_left is\t" << ind_left << "\tnum list elem in left child is\t" << num_list_elem_left_child << endl;
                 cout << "ind_right is\t" << ind_right << "\tnum list elem in right child is\t" << num_list_elem_right_child << endl;
             }            
-            if (debug) {assert (ind_left == num_list_elem_left_child && ind_right == num_list_elem_right_child);}  
+            if (verbose) {assert (ind_left == num_list_elem_left_child && ind_right == num_list_elem_right_child);}  
             // cout << "total log likelihood added to " << parent->name << "\tafter update is\t" << parent->log_scaling_factor << endl;              
             // break;
             // collapse contiguous reference type list elements into a single list element
             // this->Combine_ref_type_list_elements(parent);
-            if (debug) {
+            if (verbose) {
                 assert((*(parent->genome_list.end()-1))->start_pos + (*(parent->genome_list.end()-1))->n_pos -1 == GENOME_LENGTH);
             }
             // assert(*(parent->genome_list.end()-1)->start_pos + *(parent->genome_list.end()-1)->n_pos -1 = GENOME_LENGTH);
@@ -1003,7 +1008,7 @@ void tree::Set_model_parameters() {
     // cout << "GTR rate matrix is " << endl << this->Q_GTR << endl;
     // Set root and compute vertex list for post order traversal
     // node * l;
-    // if (this->debug) {
+    // if (this->verbose) {
     //     if (this->Contains_node("EPI_ISL_1208981")) {
     //             l = this->Get_node("EPI_ISL_1208981");
     //         } else {
@@ -1074,7 +1079,7 @@ node * tree::Get_node(string u_name) {
     if (!node_present) {
         cout << "node " << u_name << " is missing " << endl;
     }    
-    if (debug) {assert(node_present);}
+    if (verbose) {assert(node_present);}
     return(this->node_list[u_name]);
 }
 
@@ -1172,9 +1177,11 @@ void tree::Read_newick_file() {
     }
     unsigned int num_leaves = this->leaves.size();
     unsigned int num_nodes = this->node_list.size();
-    cout << "Number of edges is " << this->undirected_edge_length_map.size() << endl;
-    cout << "Number of leaves is " << num_leaves << endl;
-    cout << "Number of nodes is " << num_nodes << endl;    
+    if (this->verbose) {
+        cout << "Number of edges is " << this->undirected_edge_length_map.size() << endl;
+        cout << "Number of leaves is " << num_leaves << endl;
+        cout << "Number of nodes is " << num_nodes << endl;    
+    }    
     if (num_nodes == 2*(num_leaves) -2) {
         this->rooted = false;
         cout << "Input tree is unrooted" << endl;
@@ -1331,11 +1338,11 @@ void tree::Add_mut_diff_sequences() {
             list_elem_diff->length = this->Get_directed_edge_length(n->parent, n);
             // assert(list_elem_diff->length > 0);
 		    if (split_line.size() == 3) {
-                if (debug) {assert (split_line[0] == "n" || split_line[0] == "-" );}
+                if (verbose) {assert (split_line[0] == "n" || split_line[0] == "-" );}
                 list_elem_diff->start_pos = stoi(split_line[1]);
                 list_elem_diff->n_pos = stoi(split_line[2]);
             } else {
-                if (debug) {assert (split_line.size() == 2);}
+                if (verbose) {assert (split_line.size() == 2);}
                 list_elem_diff->start_pos = stoi(split_line[1]);
                 list_elem_diff->n_pos = 1;
             }
@@ -1361,10 +1368,10 @@ void tree::Add_mut_diff_sequences() {
             if (genome_list_size > 1) {
                 list_elem_prev_diff =  n->genome_list[genome_list_size - 2];
                 cout << (int) list_elem_prev_diff->dna << "\t" << list_elem_prev_diff->n_pos << endl;
-                if (debug) {assert (list_elem_prev_diff->dna != 4);}
+                if (verbose) {assert (list_elem_prev_diff->dna != 4);}
                 if (list_elem_prev_diff->start_pos + list_elem_prev_diff->n_pos == list_elem_diff->start_pos) {
                     list_elem_ref = n->genome_list[genome_list_size-1];
-                    if (debug) {assert(list_elem_ref->dna == 4);}
+                    if (verbose) {assert(list_elem_ref->dna == 4);}
                     n->genome_list.pop_back();
                     delete list_elem_ref;                    
                 }
@@ -1427,8 +1434,8 @@ class fastLK_overview {
 public:    
     tree * T;
     void Run_workflow(string workflow_type);
-    fastLK_overview(string path_to_reference_file, string path_to_mut_diff_file, string path_to_sequence_alignment_file, string path_to_tree_file, string path_to_log_file, string workflow_type, float clv_threshold){        
-        chrono::system_clock::time_point start_time = std::chrono::high_resolution_clock::now();		
+    fastLK_overview(string path_to_reference_file, string path_to_mut_diff_file, string path_to_sequence_alignment_file, string path_to_tree_file, string path_to_log_file, string workflow_type, float clv_threshold, bool verbose_flag_bool){        
+        chrono::system_clock::time_point start_time = std::chrono::high_resolution_clock::now();		        
         this->T = new tree;
         this->T->tree_file_name = path_to_tree_file;
         this->T->alignment_file_name = path_to_sequence_alignment_file;
@@ -1445,8 +1452,13 @@ public:
             this->T->workflow_type = "mut_diff";
         } else {
             this->T->workflow_type = workflow_type;
-        }        
-        // workflow_type = "debug";
+        }
+        if (verbose_flag_bool) {
+            this->T->verbose = true;
+        } else {
+            this->T->verbose = false;
+        }
+        // workflow_type = "verbose";
         //workflow_type = "standard"; 
         this->Run_workflow(this->T->workflow_type);
         cout << "workflow type is " << this->T->workflow_type << endl;
@@ -1489,8 +1501,8 @@ void fastLK_overview::Run_workflow(string workflow_type){
         this->T->Compute_loglikelihood_using_fast_pruning_algorithm();
         // cout << "Completed computing log-likelihood score" << endl;
         cout << "log likelihood score computed using fast pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
-    } else if (workflow_type == "debug") {        
-        this->T->Debug_combining_genome_ref_elements();
+    } else if (workflow_type == "verbose") {        
+        this->T->verbose_combining_genome_ref_elements();
     }    
     }
 
