@@ -3,6 +3,8 @@
         "*.rmd": "markdown",
         "new": "cpp",
         "ostream": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "dense": "cpp",
+        "matrixfunctions": "cpp"
     }
 }

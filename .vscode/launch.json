@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/fastLK",
+            // test_4a
+            // " -r " + test_data_path_4a + "EPI_ISL_402124_lowercase.fasta -s + " + test_data_path_4a + test_prefix_4a + ".fa -m " + test_data_path_4a + test_prefix_4a + ".mut_diff -w mut_diff -t " + test_data_path_4a + test_prefix_4a + ".fastree" + " -verbose_flag 1"
+            "args": ["-p", "/home/kalaghat/exaptation/fast_approx_pruning/test_data/test_4a/", "-r EPI_ISL_402124_lowercase.fasta", "-s", "test_prefix_4a", ".fa" , "-m", "test_prefix_4a", ".mut_diff", "-w", "mut_diff", "-t", "test_prefix_4a", '_bi.fastree', "-verbose_flag", "1"],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

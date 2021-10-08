@@ -15,6 +15,12 @@ int main(int argc, char * argv[])
     string verbose_flag_string;
     float clv_threshold = 0;
     string path_to_sequence_alignment_file = "";
+    
+    cout << "Command to be executed is ";
+    for (int i = 1; i < argc ; i++) {
+        cout << argv[i] << "\t";
+    }
+    cout << endl;    
 
     if (argc < 2) {        
         cerr << "Usage: " << argv[0] << " -r reference_file -p path -s multiple_sequence_alignment -e clv_threshold -m mutation_diff_file -w workflow_type -t tree_file -l log_file -v verbose_flag" << endl;
@@ -75,6 +81,7 @@ int main(int argc, char * argv[])
     }
 
     // add "path" to input files
+    cout << "path to input files is " << path << endl;
     path_to_reference_file  = path + path_to_reference_file;
     path_to_mut_diff_file  = path + path_to_mut_diff_file;
     path_to_sequence_alignment_file  = path + path_to_sequence_alignment_file;
@@ -84,6 +91,15 @@ int main(int argc, char * argv[])
     fastLK_overview * fastLK_manager = new fastLK_overview(path_to_reference_file, path_to_mut_diff_file, path_to_sequence_alignment_file, path_to_tree_file, path_to_log_file, workflow_type, clv_threshold,verbose_flag_bool);
 
     delete fastLK_manager;
+
+    if (verbose_flag_bool) {        
+        cout << "[";
+    for (int i = 1; i < argc -1 ; i++) {
+        cout << "\"" << argv[i] << "\"" << ",\t";
+    }
+    cout << argv[argc-1] << "]";
+    cout << endl;
+    }
 
     return (0); 
 }
