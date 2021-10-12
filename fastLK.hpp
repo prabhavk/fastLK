@@ -10,7 +10,6 @@
 #include <iomanip>
 #include <regex>
 #include <eigen3/Eigen/Dense>
-// #include <eigen3/Eigen/Core>
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
@@ -434,6 +433,18 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 		this->log_likelihood += (this->root->log_scaling_factor + log(site_likelihood)) * this->character_pattern_weights[site];
         this->root->log_scaling_factor = 0;
 	}
+}
+
+void tree::Set_root() {
+    for (pair <string, node *> elem : this->node_list) {
+        cout << elem.second->in_degree << endl;
+        if (elem.second->in_degree == 0) {            
+            // assert (elem.second->in_degree == 0);
+            cout << "Root found" << endl;
+            this->root = elem.second;
+        }
+    }        
+    cout << "#########33333" << endl;
 }
 
 void tree::Set_leaves() {
@@ -1181,12 +1192,22 @@ void tree::Read_newick_file() {
                         length = min_length;
                     }
                     if (!this->Contains_node(node_name)) {
+<<<<<<< HEAD
                         this->Add_node(node_name);                        
                         this->leaves.push_back(this->Get_node(node_name));
                     }
                     n = this->Get_node(node_name);
                     this->Add_directed_edge(h, n, length);
                     this->Add_undirected_edge(n, h, length);
+=======
+                        this->Add_node(node_name);
+                        n = this->Get_node(node_name);
+                        this->leaves.push_back(n);
+                    }
+                    n = this->Get_node(node_name);
+                    this->Add_directed_edge(h, n, length);
+                    // this->Add_undirected_edge(n, h, length);
+>>>>>>> 365db421f8b2db06563b50062cc56aacd235196a
                 }
             } else {
                 cerr << "sibling string has not been properly parsed" << endl;
@@ -1500,6 +1521,7 @@ public:
 void fastLK_overview::Run_workflow(string workflow_type){
     // Read tree file
     // Add sequences (perform global site pattern compression)    
+<<<<<<< HEAD
     this->T->Read_newick_file();
     this->T->Set_root();
     this->T->Set_leaves();
@@ -1508,6 +1530,15 @@ void fastLK_overview::Run_workflow(string workflow_type){
         this->T->Set_nodes_for_postorder_traversal();
     }   
     cout << "Reading reference sequence" << endl; 
+=======
+    this->T->Read_newick_file();            
+    this->T->Set_leaves();
+    this->T->Set_root();
+    if (true) {
+        cout << "Setting nodes for postorder traversal" << endl;
+        this->T->Set_nodes_for_postorder_traversal();
+    }
+>>>>>>> 365db421f8b2db06563b50062cc56aacd235196a
     this->T->Read_reference_sequence();
     if (!this->T->rooted) {
         cout << "Input tree is unrooted" << endl;
