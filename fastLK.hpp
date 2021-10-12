@@ -307,7 +307,7 @@ void tree::Set_nodes_for_postorder_traversal() {
 
 void tree::Add_directed_edge(node * p, node * c, float edge_length) {
     c->Add_parent(p);
-    p->Add_child(c);
+    p->Add_child(c);+
     this->directed_edge_length_map[make_pair(p,c)] = edge_length;
 }
 
@@ -435,17 +435,6 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 	}
 }
 
-void tree::Set_root() {
-    for (pair <string, node *> elem : this->node_list) {
-        cout << elem.second->in_degree << endl;
-        if (elem.second->in_degree == 0) {            
-            // assert (elem.second->in_degree == 0);
-            cout << "Root found" << endl;
-            this->root = elem.second;
-        }
-    }        
-    cout << "#########33333" << endl;
-}
 
 void tree::Set_leaves() {
     this->leaves.clear();
@@ -1192,22 +1181,12 @@ void tree::Read_newick_file() {
                         length = min_length;
                     }
                     if (!this->Contains_node(node_name)) {
-<<<<<<< HEAD
                         this->Add_node(node_name);                        
                         this->leaves.push_back(this->Get_node(node_name));
                     }
                     n = this->Get_node(node_name);
                     this->Add_directed_edge(h, n, length);
                     this->Add_undirected_edge(n, h, length);
-=======
-                        this->Add_node(node_name);
-                        n = this->Get_node(node_name);
-                        this->leaves.push_back(n);
-                    }
-                    n = this->Get_node(node_name);
-                    this->Add_directed_edge(h, n, length);
-                    // this->Add_undirected_edge(n, h, length);
->>>>>>> 365db421f8b2db06563b50062cc56aacd235196a
                 }
             } else {
                 cerr << "sibling string has not been properly parsed" << endl;
@@ -1521,37 +1500,36 @@ public:
 void fastLK_overview::Run_workflow(string workflow_type){
     // Read tree file
     // Add sequences (perform global site pattern compression)    
-<<<<<<< HEAD
     this->T->Read_newick_file();
     this->T->Set_root();
     this->T->Set_leaves();
-    if (true) {
-        cout << "Setting nodes for postorder traversal" << endl;
-        this->T->Set_nodes_for_postorder_traversal();
-    }   
-    cout << "Reading reference sequence" << endl; 
-=======
-    this->T->Read_newick_file();            
-    this->T->Set_leaves();
-    this->T->Set_root();
-    if (true) {
-        cout << "Setting nodes for postorder traversal" << endl;
-        this->T->Set_nodes_for_postorder_traversal();
+    this->T->Set_nodes_for_postorder_traversal();
+    if (this->T->verbose) {
+        cout << "Reading reference sequence" << endl; 
+        this->T->Read_reference_sequence();
     }
->>>>>>> 365db421f8b2db06563b50062cc56aacd235196a
-    this->T->Read_reference_sequence();
     if (!this->T->rooted) {
-        cout << "Input tree is unrooted" << endl;
+        if (this->T->verbose) {
+            cout << "Input tree is unrooted" << endl;
+        }
         this->T->Root_unrooted_tree();
     }
-    cout << "Setting model parameters" << endl; 
+    if (this->T->verbose) { 
+        cout << "Setting model parameters" << endl; 
+    }
     this->T->Set_model_parameters();    
     if (workflow_type == "standard") {
-        cout << "Adding fasta sequences" << endl;
-        this->T->Add_fasta_sequences();       
-        cout << "Compressing sequences" << endl; 
-        this->T->Compress_sequences();           
-        cout << "Computing log-likelihood using standard approach" << endl;      
+        if (this->T->verbose) {
+            cout << "Adding fasta sequences" << endl;
+        }
+        this->T->Add_fasta_sequences();
+        if (this->T->verbose) {       
+            cout << "Compressing sequences" << endl; 
+        }
+        this->T->Compress_sequences();  
+        if (this->T->verbose) {         
+            cout << "Computing log-likelihood using standard approach" << endl;      
+        }
         this->T->Compute_loglikelihood_using_standard_pruning_algorithm();        
         cout << "log likelihood score computed using standard pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
     } else if (workflow_type == "mut_diff") {

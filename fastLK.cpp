@@ -49,7 +49,7 @@ int main(int argc, char * argv[])
             } else if (strcmp(argv[i], "-v") == 0) {
                 if (i < argc -1) {
                     verbose_flag_string = argv[++i];
-                    if (strcmp(verbose_flag_string.c_str(), "1") == 0) {
+                    if (strcmp(verbose_flag_string.c_str(), "1") == 0) {                        
                         verbose_flag_bool = true;
                     } else {
                         verbose_flag_bool = false;
@@ -86,7 +86,12 @@ int main(int argc, char * argv[])
             }
         }
     }
-
+    if (verbose_flag_bool) {
+        cout << "verbose_flag_bool is True" << endl;
+    } else {
+        cout << "verbose_flag_bool is False" << endl;
+    }
+    
     // add "path" to input files
     cout << "path to input files is " << path << endl;
     path_to_reference_file  = path + path_to_reference_file;
