@@ -11,7 +11,7 @@ int main(int argc, char * argv[])
     string path_to_log_file = "";
     string workflow_type = "";
     string path = "";
-    bool verbose_flag_bool;
+    bool verbose_flag_bool = true;
     string verbose_flag_string;
     float clv_threshold = 0;
     string path_to_sequence_alignment_file = "";
@@ -25,7 +25,14 @@ int main(int argc, char * argv[])
     if (argc < 2) {        
         cerr << "Usage: " << argv[0] << " -r reference_file -p path -s multiple_sequence_alignment -e clv_threshold -m mutation_diff_file -w workflow_type -t tree_file -l log_file -v verbose_flag" << endl;
         return (-1);
-    } else {        
+    } else {
+        if (verbose_flag_bool) {        
+            cout << "[";
+        for (int i = 1; i < argc -1 ; i++) {
+            cout << "\"" << argv[i] << "\"" << ",\t";
+        }
+         cout << "\"" << argv[argc-1] << "\"";
+        cout << endl;        
         // parse arguments            
         for (int i = 1; i < argc ; i++) {
         // path to reference fasta file
@@ -63,7 +70,7 @@ int main(int argc, char * argv[])
                 if (i < argc -1) {
                     path_to_tree_file = argv[++i];
                 }
-        // path to conditional likelihood vector threshold        
+        // path to conditional likelihood vector threshold        ss
             } else if (strcmp(argv[i], "-e") == 0) {              
                 if (i < argc -1) {
                     clv_threshold = stof(argv[++i]);
@@ -90,15 +97,7 @@ int main(int argc, char * argv[])
 
     fastLK_overview * fastLK_manager = new fastLK_overview(path_to_reference_file, path_to_mut_diff_file, path_to_sequence_alignment_file, path_to_tree_file, path_to_log_file, workflow_type, clv_threshold,verbose_flag_bool);
 
-    delete fastLK_manager;
-
-    if (verbose_flag_bool) {        
-        cout << "[";
-    for (int i = 1; i < argc -1 ; i++) {
-        cout << "\"" << argv[i] << "\"" << ",\t";
-    }
-    cout << argv[argc-1] << "]";
-    cout << endl;
+    delete fastLK_manager;    
     }
 
     return (0); 

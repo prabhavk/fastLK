@@ -9,7 +9,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/fastLK",
-            "args": ["-p",	"/home/kalaghat/exaptation/fast_approx_pruning/test_data/test_4a/",	"-r",	"EPI_ISL_402124_lowercase.fasta",	"-m",	"test_4a.mut_diff",	"-t",	"test_4a_bi.fastree",	"-s",	"test_4a.fa"],
+            // test_4a
+            // " -r " + test_data_path_4a + "EPI_ISL_402124_lowercase.fasta -s + " + test_data_path_4a + test_prefix_4a + ".fa -m " + test_data_path_4a + test_prefix_4a + ".mut_diff -w mut_diff -t " + test_data_path_4a + test_prefix_4a + ".fastree" + " -verbose_flag 1"
+            "args": ["-p", "/home/kalaghat/exaptation/fast_approx_pruning/test_data/test_4a/", "-r EPI_ISL_402124_lowercase.fasta", "-s", "test_prefix_4a", ".fa" , "-m", "test_prefix _4a", ".mut_diff", "-w", "mut_diff", "-t", "test_prefix_4a", '_bi.fastree', "-verbose_flag", "1"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

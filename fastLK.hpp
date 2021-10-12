@@ -77,7 +77,7 @@ public:
     void Add_child(node * c);
     void Set_pos_for_reference_characters();
     node (string node_name) {        
-        this->name = node_name;
+        this->name = node_name;        
         genome_list.reserve(RESERVE_genome_list_elem);
     }
 
@@ -149,6 +149,7 @@ public:
     map <string, node*> node_list;
     vector <node *> leaves;
     void Set_leaves();
+    void Set_root();
     void Add_fasta_sequences();
     void Add_mut_diff_sequences();
     void Populate_DNA_to_char_map();
@@ -265,7 +266,7 @@ array <double, 4> tree::Get_clv_for_dna(unsigned char dna_obs) {
     } else if (dna_obs == 15) { // v = a, c, g
         clv[0] = 1.0; clv[1] = 1.0; clv[2] = 1.0;
     }        
-    if (verbose) {assert(*max_element(clv.begin(),clv.end()) > 0.0);}   
+    if (this->verbose) {assert(*max_element(clv.begin(),clv.end()) > 0.0);}   
     return (clv);
 }
 
@@ -298,6 +299,11 @@ void tree::Set_nodes_for_postorder_traversal() {
             num_nodes_to_visit ++;
         }
     }
+    cout << "Nodes for postorder traversal are" << endl;
+    for (node * n: this->nodes_for_postorder_traversal) {        
+        cout << n->name << endl;
+    }
+    cout << "---------------------------------" << endl;    
 }
 
 void tree::Add_directed_edge(node * p, node * c, float edge_length) {
@@ -367,24 +373,27 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
     double largest_elem;
 	this->log_likelihood = 0;
 	double site_likelihood;
-    bool verbose = false;
+    // bool verbose = true;
     unsigned int num_char_patterns = this->character_pattern_weights.size();
     // cout << "Iterating over character patterns" << endl;
 	for (unsigned int site = 0; site < num_char_patterns; site++) {
     // for (unsigned int site = 0; site < 1; site++) {
         this->Reset_log_scaling_factors_and_clvs();
-        if (verbose) {
+        if (this->verbose) {
             cout << "log scaling factors and clvs resetted" << endl;
         }        
         for (node * n : this->nodes_for_postorder_traversal) {
             if (n->leaf) {
                 // set conditional likelihood vector using observed character  
-                if (verbose) {
-                    cout << "node name is\t" << n->name << endl;
+                if (this->verbose) {
+                    cout << "leaf node name is\t" << n->name << endl;
                     cout << " dna for " << " site " << site << " is " << (int) n->compressed_sequence[site] << endl;
                 }                                              
                 n->clv = this->Get_clv_for_dna(n->compressed_sequence[site]);
             } else {
+                if (this->verbose) {
+                    cout << "Non-leaf node name is\t" << n->name << endl;                    
+                }
                 // compute conditional likelihood vector by multiplying partial likelihoods
                 c_l = n->children[0];
                 c_r = n->children[1];
@@ -419,7 +428,7 @@ void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
 			site_likelihood += this->pi_rho[dna] * this->root->clv[dna];
 		}
         log_likelihood_contri_from_root_seq += log(site_likelihood) * this->character_pattern_weights[site];
-        if (verbose) {
+        if (this->verbose) {
             cout << "log_likelihood_contri_from_root_seq\t" << setprecision(8) << log_likelihood_contri_from_root_seq << endl;
         }        
 		this->log_likelihood += (this->root->log_scaling_factor + log(site_likelihood)) * this->character_pattern_weights[site];
@@ -433,10 +442,21 @@ void tree::Set_leaves() {
         if (elem.second->degree == 1) {
             this->leaves.push_back(elem.second);
             elem.second->leaf = true;
+        } else {
+            elem.second->leaf = false;
         }
     }
     if (this->verbose) {
         cout << "Number of leaves is " << this->leaves.size() << endl;
+    }    
+}
+
+void tree::Set_root() {
+    for (pair <string, node *> elem : this->node_list) {
+        if (elem.second->in_degree == 0) {
+            this->root = elem.second;
+            cout << "Root has been set" << endl;
+        }
     }    
 }
 
@@ -1161,10 +1181,11 @@ void tree::Read_newick_file() {
                         length = min_length;
                     }
                     if (!this->Contains_node(node_name)) {
-                        this->Add_node(node_name);
+                        this->Add_node(node_name);                        
                         this->leaves.push_back(this->Get_node(node_name));
                     }
                     n = this->Get_node(node_name);
+                    this->Add_directed_edge(h, n, length);
                     this->Add_undirected_edge(n, h, length);
                 }
             } else {
@@ -1248,8 +1269,8 @@ void tree::Add_fasta_sequences() {
 	ifstream inputFile(this->alignment_file_name.c_str());
 	string seq_name;
 	string seq = "";	
-	for(string line; getline(inputFile, line );) {
-		if (line[0]=='>') {
+	for(string line; getline(inputFile, line);) {        
+		if (line[0] == '>') {
 			if (seq != "") {
 				for (char const dna: seq) {                    
 					recoded_sequence.push_back(this->DNA_to_char[string(1,tolower(dna))]);
@@ -1271,6 +1292,8 @@ void tree::Add_fasta_sequences() {
 		recoded_sequence.push_back(this->DNA_to_char[string(1,tolower(dna))]);
 		site += 1;
 	}
+    cout << "All but last sequences have been added" << endl;
+    cout << "Adding node " << seq_name << endl;
 	v = this->Get_node(seq_name);
     v->complete_sequence = recoded_sequence;
 	recoded_sequence.clear();
@@ -1478,15 +1501,26 @@ void fastLK_overview::Run_workflow(string workflow_type){
     // Read tree file
     // Add sequences (perform global site pattern compression)    
     this->T->Read_newick_file();
+    this->T->Set_root();
     this->T->Set_leaves();
+    if (true) {
+        cout << "Setting nodes for postorder traversal" << endl;
+        this->T->Set_nodes_for_postorder_traversal();
+    }   
+    cout << "Reading reference sequence" << endl; 
     this->T->Read_reference_sequence();
     if (!this->T->rooted) {
+        cout << "Input tree is unrooted" << endl;
         this->T->Root_unrooted_tree();
     }
+    cout << "Setting model parameters" << endl; 
     this->T->Set_model_parameters();    
     if (workflow_type == "standard") {
-        this->T->Add_fasta_sequences();
-        this->T->Compress_sequences();
+        cout << "Adding fasta sequences" << endl;
+        this->T->Add_fasta_sequences();       
+        cout << "Compressing sequences" << endl; 
+        this->T->Compress_sequences();           
+        cout << "Computing log-likelihood using standard approach" << endl;      
         this->T->Compute_loglikelihood_using_standard_pruning_algorithm();        
         cout << "log likelihood score computed using standard pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
     } else if (workflow_type == "mut_diff") {
