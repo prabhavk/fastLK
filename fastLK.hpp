@@ -307,7 +307,7 @@ void tree::Set_nodes_for_postorder_traversal() {
 
 void tree::Add_directed_edge(node * p, node * c, float edge_length) {
     c->Add_parent(p);
-    p->Add_child(c);+
+    p->Add_child(c);
     this->directed_edge_length_map[make_pair(p,c)] = edge_length;
 }
 

@@ -1,0 +1,47 @@
+IQ-TREE multicore version 2.1.2 COVID-edition for Linux 64-bit built Oct 22 2020
+Developed by Bui Quang Minh, James Barbetti, Nguyen Lam Tung,
+Olga Chernomor, Heiko Schmidt, Dominik Schrempf, Michael Woodhams.
+
+Host:    voyager (AVX2, FMA3, 31 GB RAM)
+Command: /home/kalaghat/exaptation/Tools/iqtree2 -s /home/kalaghat/exaptation/fast_approx_pruning/test_data/test_n/test_n.fa -st DNA -te /home/kalaghat/exaptation/fast_approx_pruning/test_data/test_n/test_n_bi.fastree -pre test_n -blfix -keep-ident -m GTR{0.04,0.3,0.1,0.02,1.0,1.0}+FQ -redo -nt 1
+Seed:    415244 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Wed Oct 13 19:34:35 2021
+Kernel:  AVX+FMA - 1 threads (12 CPU cores detected)
+
+HINT: Use -nt option to specify number of threads because your CPU has 12 cores!
+HINT: -nt AUTO will automatically determine the best number of threads to use.
+
+Reading alignment file /home/kalaghat/exaptation/fast_approx_pruning/test_data/test_n/test_n.fa ... Fasta format detected
+Alignment most likely contains DNA/RNA sequences
+Alignment has 4 sequences with 29891 columns, 8 distinct patterns
+0 parsimony-informative, 0 singleton sites, 29891 constant sites
+                          Gap/Ambiguity  Composition  p-value
+   1  hCoV-19/Wuhan/WIV04/2019    0.03%    passed    100.00%
+   2  hCoV-19/Wuhan/WIV05/2019    0.00%    passed    100.00%
+   3  hCoV-19/Wuhan/WIV06/2019    0.00%    passed    100.00%
+   4  hCoV-19/Wuhan/WIV07/2019    0.00%    passed    100.00%
+****  TOTAL                       0.01%  0 sequences failed composition chi2 test (p-value<5%; df=3)
+Reading input tree file /home/kalaghat/exaptation/fast_approx_pruning/test_data/test_n/test_n_bi.fastree ... rooted tree
+
+NOTE: 0 MB RAM (0 GB) is required!
+Estimate model parameters (epsilon = 0.010)
+1. Initial log-likelihood: -41454.241
+Optimal log-likelihood: -41454.241
+Rate parameters:  A-C: 0.04000  A-G: 0.30000  A-T: 0.10000  C-G: 0.02000  C-T: 1.00000  G-T: 1.00000
+Base frequencies:  A: 0.250  C: 0.250  G: 0.250  T: 0.250
+Parameters optimization took 1 rounds (0.001 sec)
+BEST SCORE FOUND : -41454.241
+Total tree length: 0.001
+
+Total number of iterations: 0
+CPU time used for tree search: 0.000 sec (0h:0m:0s)
+Wall-clock time used for tree search: 0.000 sec (0h:0m:0s)
+Total CPU time used: 0.020 sec (0h:0m:0s)
+Total wall-clock time used: 0.080 sec (0h:0m:0s)
+
+Analysis results written to: 
+  IQ-TREE report:                test_n.iqtree
+  Maximum-likelihood tree:       test_n.treefile
+  Screen log file:               test_n.log
+
+Date and Time: Wed Oct 13 19:34:35 2021
