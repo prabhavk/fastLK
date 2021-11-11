@@ -62,7 +62,9 @@ public:
     int times_visited = 0;  
     string concatenated_descendant_names = "";
     bool leaf = false;
+    bool empty_genome_list = true;
     node * parent = this;
+    float initial_edge_length;
     array <double, 4> clv;
     double log_scaling_factor = 0;
     string name;
@@ -89,27 +91,38 @@ public:
 };
 
 void node::Set_pos_for_reference_characters() {
-    int num_genome_list_elems = this->genome_list.size();
-    genome_list_elem * list_elem;
-    for (int i = 0; i < num_genome_list_elems; i++) {
-        list_elem = this->genome_list[i];
-        if (list_elem->dna == 4) { // 4 is code for refrence character
-            if (i == 0) {
-                // reference list element is the first genome list element
-                list_elem->start_pos = 1;
-                list_elem->n_pos = this->genome_list[i+1]->start_pos - list_elem->start_pos;
-            } else if (i == num_genome_list_elems -1) {
-                // reference list element is the last genome list element
-                list_elem->start_pos = this->genome_list[i-1]->start_pos + this->genome_list[i-1]->n_pos;
-                list_elem->n_pos = GENOME_LENGTH - list_elem->start_pos + 1;
-            } else {
-                // reference list element is an intermediate genome list element
-                list_elem->start_pos = this->genome_list[i-1]->start_pos + this->genome_list[i-1]->n_pos;
-                list_elem->n_pos = this->genome_list[i+1]->start_pos - list_elem->start_pos;
+    // if length of genome list is empty
+    if (this->empty_genome_list) {
+        genome_list_elem * list_elem_ref = new genome_list_elem();
+        list_elem_ref->dna = 4; // 4 is the code for reference sequence
+        list_elem_ref->length = this->initial_edge_length;
+        list_elem_ref->start_pos = 1;
+        list_elem_ref->n_pos = GENOME_LENGTH;
+        this->genome_list.push_back(list_elem_ref);
+        this->empty_genome_list = false;
+    } else {
+        int num_genome_list_elems = this->genome_list.size();    
+        genome_list_elem * list_elem;    
+        for (int i = 0; i < num_genome_list_elems; i++) {
+            list_elem = this->genome_list[i];
+            if (list_elem->dna == 4) { // 4 is code for refrence character
+                if (i == 0) {
+                    // reference list element is the first genome list element
+                    list_elem->start_pos = 1;
+                    list_elem->n_pos = this->genome_list[i+1]->start_pos - list_elem->start_pos;
+                } else if (i == num_genome_list_elems -1) {
+                    // reference list element is the last genome list element
+                    list_elem->start_pos = this->genome_list[i-1]->start_pos + this->genome_list[i-1]->n_pos;
+                    list_elem->n_pos = GENOME_LENGTH - list_elem->start_pos + 1;
+                } else {
+                    // reference list element is an intermediate genome list element
+                    list_elem->start_pos = this->genome_list[i-1]->start_pos + this->genome_list[i-1]->n_pos;
+                    list_elem->n_pos = this->genome_list[i+1]->start_pos - list_elem->start_pos;
+                }
             }
+            if (verbose) {assert (list_elem->n_pos > 0);}
         }
-        if (verbose) {assert (list_elem->n_pos > 0);}
-    }
+    }    
 }
 
 void node::Add_parent(node * p) {
@@ -154,7 +167,7 @@ public:
     void Populate_DNA_to_char_map();
     void Compress_sequences();
     void Add_ref_nuc_counts_based_on_genome_coordinates();
-    map <unsigned short, array <unsigned char, 4>> cum_ref_nuc_counts_map; // store interval counts of a, c, g, t
+    map <unsigned short, array <unsigned short, 4>> cum_ref_nuc_counts_map; // store interval counts of a, c, g, t
     vector <int> character_pattern_weights;
     void Set_model_parameters();
     float Compute_scaling_factor(Matrix4f Q);    
@@ -603,7 +616,7 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
     
     unsigned char dna_l = list_elem_left_child->dna;
     unsigned char dna_r = list_elem_right_child->dna;
-    array <unsigned char, 4> ref_nuc_counts;
+    array <unsigned short, 4> ref_nuc_counts;
     array <double, 4> clv_parent;
     array <double, 4> clv_left_child;
     array <double, 4> clv_right_child;
@@ -680,7 +693,7 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
                     // where n_i is the number of ref nucs that is i
                     // thus contribution towards log_likelihood is sum_i n_iQ(i,i)(l_c + l_r)
                     this->cum_ref_nuc_counts_map[list_elem_parent->start_pos - 1];
-                    for (unsigned char dna = 0; dna < 4; dna ++) {
+                    for (unsigned short dna = 0; dna < 4; dna ++) {
                         ref_nuc_counts[dna] = this->cum_ref_nuc_counts_map[list_elem_parent->start_pos + list_elem_parent->n_pos -1][dna];
                         ref_nuc_counts[dna] -= this->cum_ref_nuc_counts_map[list_elem_parent->start_pos -1][dna];
                         // cout << " ref_nuc_counts[" << (int) dna << "] is " << (int) ref_nuc_counts[dna] << endl;
@@ -787,21 +800,11 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
                         list_elem_parent->dna = 4; // reference
                         parent->clv_for_list_elem.erase(list_elem_parent);
                     } else {
-                        // cout << "**************************" << endl;
-                        // cout << "Unlikely case encountered" << endl;
-                        // cout << "ref pos is " << list_elem_parent->start_pos << endl;
-                        // cout << "n pos is " << list_elem_parent->n_pos << endl;                        
-                        // cout << "dna_l is " << (int) dna_l << "\t" << "dna_r is " << (int) dna_r << endl;
-                        // for (int dna = 0; dna < 4; dna ++) {
-                        //     cout << "clv left child " << dna << " is " << clv_left_child[dna] << "\t";
-                        //     cout << "clv right child " << dna << " is " << clv_right_child[dna] << "\t";
-                        //     cout << "clv parent " << dna << " is " << clv_parent[dna] << endl;
-                        // }
                         // cout << "dna assigned to parent " << parent->name << " is " << (int) index_largest_elem << endl;
                         list_elem_parent->dna = index_largest_elem;
                         parent->clv_for_list_elem.erase(list_elem_parent);
                     }
-                }       
+                }
             }
         }
     }    
@@ -809,22 +812,43 @@ void tree::Update_list_elements(node * parent, node * left_child, node * right_c
 
 
 void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
+    cout << "-------------------------------------------------------" << endl;
+    cout << "Computing log-likehood using genome list for the root" << endl;
     this->log_likelihood = this->root->log_scaling_factor;
     double log_likelihood_contri_from_root_seq = this->log_likelihood;
     int n_pos; unsigned char dna_r;
     array <double, 4> clv_root;
     double site_likelihood;
-    array <unsigned char, 4> ref_nuc_counts;
+    array <unsigned short, 4> ref_nuc_counts;
     int tot_pos = 0;
+    cout << "Number of list elements in genome list for the root " << this->root->genome_list.size() << endl;
     for (genome_list_elem * list_elem_root : this->root->genome_list) {
-        n_pos = list_elem_root->n_pos;        
+        cout << "########################################################" << endl;
+        n_pos = list_elem_root->n_pos;
         dna_r = list_elem_root->dna;
+        cout << "list_elem_root dna is " << (int) list_elem_root->dna << endl;        
+        cout << "list_elem_root start pos is " << (int) list_elem_root->start_pos << endl;
+        cout << "list_elem_root n_pos is " << (int) list_elem_root->n_pos << endl;
+
         if (dna_r == 4) { // reference
-            for (unsigned char dna = 0; dna < 4; dna ++) {
+        cout << "***********************************************************" << endl;
+            for (unsigned char dna = 0; dna < 4; dna ++) {                
                 ref_nuc_counts[dna] = this->cum_ref_nuc_counts_map[list_elem_root->start_pos + list_elem_root->n_pos -1][dna];
                 ref_nuc_counts[dna] -= this->cum_ref_nuc_counts_map[list_elem_root->start_pos -1][dna];
+                if (ref_nuc_counts[dna] == 0) {
+                    cout << "list elem start pos is " << list_elem_root->start_pos << endl;
+                    cout << "list elem n_pos is " << list_elem_root->n_pos << endl;
+                    cout << "I should be printed" << endl;
+                    cout << "cumulative counts for current list elem is ";
+                    cout << this->cum_ref_nuc_counts_map[list_elem_root->start_pos + list_elem_root->n_pos -1][dna] << endl;
+                    cout << "cumulative counts for previous list elem is " << this->cum_ref_nuc_counts_map[list_elem_root->start_pos -1][dna] << endl;
+                }
+                assert(ref_nuc_counts[dna] > 0);
+                cout << "cum counts is " << (int) ref_nuc_counts[dna] << endl;
+                cout << "pi_rho is " << pi_rho[dna] << endl;
                 this->log_likelihood += ref_nuc_counts[dna] * log(pi_rho[dna]);
             }
+        cout << "***********************************************************" << endl;
         } else if (dna_r != 5) { // skipping N
             if (list_elem_root->dna < 4) {
                 clv_root = this->Get_clv_for_dna(list_elem_root->dna);
@@ -846,6 +870,10 @@ void tree::Compute_log_likelihood_score_for_tree_using_genome_list() {
 }
 
 void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
+    if (this->verbose) {
+        cout << "------------------------------------------------------------------" << endl;
+    }
+
     // Apply pruning algorithm to genome lists
     Matrix4f Q = this->Q_GTR;
     Matrix4f Q_scaled_l; Matrix4f Q_scaled_r;
@@ -886,21 +914,26 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
             num_list_elem_right_child = right_child->genome_list.size();            
             // cout << "Updating list elements for " << left_child->name << " and " << right_child->name << endl;
             // Add genome wide log scaling factors of children to parent
-            cout << num_list_elem_left_child << "\t" << num_list_elem_right_child << endl;
+            cout << "num_list_elem_left_child is " << num_list_elem_left_child << "\t" << "num_list_elem_right_child " << num_list_elem_right_child << endl;
             parent->log_scaling_factor = left_child->log_scaling_factor + right_child->log_scaling_factor;
             if (logging) {
-                cout << parent->name << "\t" << parent->concatenated_descendant_names << "\t";
-                this->log_file << parent->name << "\t" << parent->concatenated_descendant_names << "\t";
+                cout << parent->name << "\t" << parent->concatenated_descendant_names << "\n";
+                this->log_file << parent->name << "\t" << parent->concatenated_descendant_names << "\n";
             }
             while (ind_left < num_list_elem_left_child && ind_right < num_list_elem_right_child) {
                 if (verbose) {
                     cout << "in while loop" << endl;
                 }
                 // verbose_continue = false;
+                // cout << "Check 1" << endl;
                 list_elem_parent = new genome_list_elem();
+                // cout << "Check 2" << endl;
                 parent->genome_list.push_back(list_elem_parent);
+                // cout << "Check 3" << endl;
                 list_elem_left_child = left_child->genome_list[ind_left];
+                // cout << "Check 4" << endl;
                 list_elem_right_child = right_child->genome_list[ind_right];         
+                // cout << "Check 5" << endl;
                 if (verbose) {
                     cout << endl << "Before update" << endl ;
                     cout << "Left child:" ;
@@ -922,7 +955,7 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
                     // add length of branch from grandparent to parent to list_elem_parent->length
                     list_elem_parent->length += this->Get_directed_edge_length(parent->parent, parent);
                 }
-                if (verbose || list_elem_parent->dna>16) {
+                if (verbose || list_elem_parent->dna > 16) {
                     cout << "After update" << endl ;
                     cout << "left child:" ;
                     cout << "\tname:\t" << left_child->name;
@@ -961,10 +994,12 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
                 }
             }
             if (logging) {
-                cout << "logging " << endl;
-                this->log_file << "\t" << parent->log_scaling_factor << endl;
+                cout << "logging " << endl;                
+                this->log_file << "\t" << parent->name << "\t" << parent->log_scaling_factor << endl;
+                cout << "Check 6" << endl;
             }            
-            // cout << parent->name << endl;
+            cout << "parent name is " << parent->name << endl;
+            cout << "parent genome list size is " << parent->genome_list.size() << endl;
             assert((*(parent->genome_list.end()-1))->start_pos + (*(parent->genome_list.end()-1))->n_pos -1 == GENOME_LENGTH);
             if (verbose) {
                 cout << "ind_left is\t" << ind_left << "\tnum list elem in left child is\t" << num_list_elem_left_child << endl;
@@ -974,20 +1009,20 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
             // cout << "total log likelihood added to " << parent->name << "\tafter update is\t" << parent->log_scaling_factor << endl;              
             // break;
             // collapse contiguous reference type list elements into a single list element
-            // this->Combine_ref_type_list_elements(parent);
+            this->Combine_ref_type_list_elements(parent);
             if (verbose) {
                 assert((*(parent->genome_list.end()-1))->start_pos + (*(parent->genome_list.end()-1))->n_pos -1 == GENOME_LENGTH);
             }
             // assert(*(parent->genome_list.end()-1)->start_pos + *(parent->genome_list.end()-1)->n_pos -1 = GENOME_LENGTH);
-        }
-        // // compute total log likelihood score
-        // if (verbose) {
-        //     cout << "Computing log-likelihood score for tree using genome list" << endl;
-        // }
-        // this->Compute_log_likelihood_score_for_tree_using_genome_list();
-        // if (verbose) {
-        //     cout << "Completed computing log-likelihood score for tree using genome list" << endl;
-        // }
+        }        
+    }
+    // compute total log likelihood score
+    if (verbose) {
+        cout << "Computing log-likelihood score for tree using genome list" << endl;
+    }
+    this->Compute_log_likelihood_score_for_tree_using_genome_list();
+    if (verbose) {
+        cout << "Completed computing log-likelihood score for tree using genome list" << endl;
     }        
 }
 
@@ -1304,28 +1339,53 @@ void tree::Add_ref_nuc_counts_based_on_genome_coordinates() {
     // map <unsigned short, array <unsigned char, 4>> cum_ref_nuc_counts_map;
     unsigned short end_pos;
     this->cum_ref_nuc_counts_map.clear();
-    array <unsigned char, 4> cum_nuc_counts;
+    array <unsigned short, 4> cum_nuc_counts;
     cum_nuc_counts[0] = 0; cum_nuc_counts[1] = 0; cum_nuc_counts[2] = 0; cum_nuc_counts[3] = 0;
     for (node * leaf : this->leaves) {
         for (genome_list_elem * list_elem : leaf->genome_list) {            
-            end_pos = list_elem->start_pos + list_elem->n_pos - 1;
+            end_pos = list_elem->start_pos + list_elem->n_pos - 1;            
             if (this->cum_ref_nuc_counts_map.find(end_pos) == this->cum_ref_nuc_counts_map.end()) {
+                // cout << "position added in cum ref count map is " << end_pos << endl;
                 this->cum_ref_nuc_counts_map[end_pos] = cum_nuc_counts;
             }
         }
     }
-    unsigned char c;
-    for (unsigned short pos = 1; pos < GENOME_LENGTH; pos++) {
-        c = this->reference_sequence[pos];        
-        // assert (c < 4);
-        cum_nuc_counts[c] += 1;
+    // cout << "initial sum of cum counts is " << cum_nuc_counts[0] + cum_nuc_counts[1] + cum_nuc_counts[2] + cum_nuc_counts[3] << endl;
+    // cout << "###########################################" << endl;
+    unsigned short c;
+    int counter = 0;    
+    for (unsigned short pos = 1; pos < GENOME_LENGTH + 1; pos++) {
+        counter ++;
+        c = this->reference_sequence[pos -1];        
+        if (c > 4 || c < 0) {
+            cout << (int) c << endl;
+            cout << pos << endl;
+        }
+        assert (c < 4 && c >= 0);
+        cum_nuc_counts[c] ++;
+        // cum_nuc_counts[c] += 1;        
+        // cout << "cum counts for pos " << pos << " is " << cum_nuc_counts[0] + cum_nuc_counts[1] + cum_nuc_counts[2] + cum_nuc_counts[3] << " and character is " << (int) c << endl;
+        // for (int i = 0; i < 4; i++) {
+        //     cout << "cum counts for " << i << " is " << (int) cum_nuc_counts[i] << endl;
+        // }
         if (this->cum_ref_nuc_counts_map.find(pos) != this->cum_ref_nuc_counts_map.end()) {
-            this->cum_ref_nuc_counts_map[pos] = cum_nuc_counts;
+            // cout << "cum counts for pos " << pos << " is " << cum_nuc_counts[0] + cum_nuc_counts[1] + cum_nuc_counts[2] + cum_nuc_counts[3] << endl;
+            for (unsigned short dna = 0; dna < 4; dna++) {
+                this->cum_ref_nuc_counts_map[pos][dna] = cum_nuc_counts[dna];
+            }            
         }
     }
+    // cout << "###########################################" << endl;
     cum_nuc_counts[0] = 0; cum_nuc_counts[1] = 0; cum_nuc_counts[2] = 0; cum_nuc_counts[3] = 0;
     // for the case where a stretch of ref nucs starts at 1
     this->cum_ref_nuc_counts_map[0] = cum_nuc_counts;
+    cout << "size of cum ref nuc counts map is " << this->cum_ref_nuc_counts_map.size() << endl;
+    for (pair<unsigned short, std::array<unsigned short, 4UL>> ref_count_map_elem : this->cum_ref_nuc_counts_map) {
+        cout << "Position is " << ref_count_map_elem.first << endl;
+        for (unsigned short dna = 0; dna < 4; dna ++) {
+            cout << "Number of counts for dna " << (int) dna << " is " << (int) ref_count_map_elem.second[dna] << endl;
+        }
+    }
 }
 
 void tree::Add_mut_diff_sequences() {
@@ -1343,23 +1403,27 @@ void tree::Add_mut_diff_sequences() {
     genome_list_elem * list_elem_diff; // Read from mut diff file
     genome_list_elem * list_elem_ref; // List element for positions identical to reference sequence
     genome_list_elem * list_elem_prev_diff;
-    unsigned int genome_list_size;
-    bool empty_genome_list = true;
+    unsigned int genome_list_size;    
+    cout << "Reading mutdiff file" << endl;
+    // this->verbose = true;
 	for (string line; getline(inputFile, line );) {
 		if (line[0]=='>') {
             if (seq_name != "") {                              
                 n->Set_pos_for_reference_characters();
             }
             seq_name = line.substr(1,line.length());
-            n = this->Get_node(seq_name);            
-            empty_genome_list = true;
+            if (this->verbose) {
+                cout << "seq_name\t" << seq_name << endl;
+            }
+            n = this->Get_node(seq_name);
+            n->initial_edge_length = this->Get_directed_edge_length(n->parent,n);                        
 		}
 		else {
             boost::split(split_line, line, [](char c){return c == '\t';});
             list_elem_diff = new genome_list_elem();
             dna = split_line[0];
             list_elem_diff->dna = this->DNA_to_char[dna];
-            list_elem_diff->length = this->Get_directed_edge_length(n->parent, n);
+            list_elem_diff->length = n->initial_edge_length;
             // assert(list_elem_diff->length > 0);
 		    if (split_line.size() == 3) {
                 if (verbose) {assert (split_line[0] == "n" || split_line[0] == "-" );}
@@ -1380,12 +1444,12 @@ void tree::Add_mut_diff_sequences() {
             //     cout << "start pos is " << list_elem_diff->start_pos << endl;
             //     cout << "n pos is " << list_elem_diff->n_pos << endl;
             // }
-            if (empty_genome_list && list_elem_diff->start_pos > 1) {
+            if (n->empty_genome_list && list_elem_diff->start_pos > 1) {
                 list_elem_ref = new genome_list_elem();
                 list_elem_ref->dna = 4; // 4 is the code for reference sequence
-                list_elem_ref->length = this->Get_directed_edge_length(n->parent, n);
+                list_elem_ref->length = n->initial_edge_length;
                 n->genome_list.push_back(list_elem_ref);
-                empty_genome_list = false;
+                n->empty_genome_list = false;
             }
             // erase ref element that is sandwiched between contiguous diff elements            
             genome_list_size = n->genome_list.size();
@@ -1402,7 +1466,7 @@ void tree::Add_mut_diff_sequences() {
             }
 
             n->genome_list.push_back(list_elem_diff);
-            empty_genome_list = false;
+            n->empty_genome_list = false;
             if (list_elem_diff->start_pos + list_elem_diff->n_pos - 1 < GENOME_LENGTH) {
                 list_elem_ref = new genome_list_elem();
                 list_elem_ref->dna = 4; // 4 is the code for reference sequence
@@ -1414,7 +1478,8 @@ void tree::Add_mut_diff_sequences() {
 		}
 	}    
     n->Set_pos_for_reference_characters();
-	inputFile.close();    
+	inputFile.close();
+    // this->verbose = true;    
 }
 void tree::Compress_sequences() {
     
@@ -1499,15 +1564,15 @@ public:
 
 void fastLK_overview::Run_workflow(string workflow_type){
     // Read tree file
-    // Add sequences (perform global site pattern compression)    
+    // Add sequences (perform global site pattern compression)        
     this->T->Read_newick_file();
     this->T->Set_root();
     this->T->Set_leaves();
     this->T->Set_nodes_for_postorder_traversal();
     if (this->T->verbose) {
-        cout << "Reading reference sequence" << endl; 
-        this->T->Read_reference_sequence();
+        cout << "Reading reference sequence" << endl;         
     }
+    this->T->Read_reference_sequence();
     if (!this->T->rooted) {
         if (this->T->verbose) {
             cout << "Input tree is unrooted" << endl;
@@ -1533,13 +1598,16 @@ void fastLK_overview::Run_workflow(string workflow_type){
         this->T->Compute_loglikelihood_using_standard_pruning_algorithm();        
         cout << "log likelihood score computed using standard pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
     } else if (workflow_type == "mut_diff") {
+        cout << "Setting descendant names" << endl;
         this->T->Set_descendant_names();
+        cout << "Adding mutdiff sequences" << endl;        
         this->T->Add_mut_diff_sequences();
         for (node * n : this->T->leaves) {
             if (n->clv_for_list_elem.size() > 0) {
-                // cout << n->name << endl;
+                cout << n->name << endl;
             }
-        }        
+        }
+        cout << "Adding ref nuc counts" << endl;
         this->T->Add_ref_nuc_counts_based_on_genome_coordinates();        
         cout << "Computing log-likelihood using fast pruning algorithm" << endl;
         this->T->Compute_loglikelihood_using_fast_pruning_algorithm();
