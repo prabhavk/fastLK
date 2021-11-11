@@ -4,4 +4,4 @@ Open-source software for computing the log-likelihood score of large phylogenies
 
 # Instructions
 
-Enter the directory where you have downloaded/extracted the files and do make. The exectuable is called fastLK.
+Enter the directory where you have downloaded/extracted the files and run make. The exectuable is called fastLK.
