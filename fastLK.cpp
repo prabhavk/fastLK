@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
     cout << endl;    
 
     if (argc < 2) {        
-        cerr << "Usage: " << argv[0] << " -r reference_file -p path -s multiple_sequence_alignment -e clv_threshold -m mutation_diff_file -w workflow_type -t tree_file -l log_file -v verbose_flag" << endl;
+        cerr << "Usage: " << argv[0] << " -p path -r reference_file -s multiple_sequence_alignment -e clv_threshold -m mutation_diff_file -w workflow_type -t tree_file -l log_file -v verbose_flag" << endl;
         return (-1);
     } else {
         if (verbose_flag_bool) {        
@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
                 if (i < argc -1) {
                     path_to_tree_file = argv[++i];
                 }
-        // path to conditional likelihood vector threshold        ss
+        // path to conditional likelihood vector threshold
             } else if (strcmp(argv[i], "-e") == 0) {              
                 if (i < argc -1) {
                     clv_threshold = stof(argv[++i]);
