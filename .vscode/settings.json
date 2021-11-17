@@ -2,6 +2,11 @@
     "files.associations": {
         "*.rmd": "markdown",
         "ostream": "cpp",
+<<<<<<< HEAD
         "array": "cpp"
+=======
+        "array": "cpp",
+        "iostream": "cpp"
+>>>>>>> 5921eab0218f0a3c00362dee08a0c14bbecd7d35
     }
 }
