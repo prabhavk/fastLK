@@ -91,6 +91,7 @@ int main(int argc, char * argv[])
     } else {
         cout << "verbose_flag_bool is False" << endl;
     }
+    exit(-1);
     
     // add "path" to input files
     cout << "path to input files is " << path << endl;
