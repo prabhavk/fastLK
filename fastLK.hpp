@@ -186,6 +186,7 @@ public:
     bool Contains_node(string node_name);
     void Add_undirected_edge(node * u, node * v, float length);
     void Add_directed_edge(node * u, node * v, float length);
+    void OptimizeBranchLengths();
     vector <node *> nodes_for_postorder_traversal;
     float Get_undirected_edge_length(node * u, node * v);
     float Get_directed_edge_length(node * p, node * c);
@@ -198,7 +199,7 @@ public:
     void Compute_log_likelihood_score_for_tree_using_genome_list();
     array <float, 4> pi_rho;
     // TESTING
-    void verbose_combining_genome_ref_elements();    
+    void verbose_combining_genome_ref_elements();
 
     // Matrix4f Q_UNREST;
 
@@ -217,7 +218,24 @@ public:
     }
 };
 
-void tree::Root_unrooted_tree(){
+
+void tree::OptimizeBranchLengths() {
+    float t_curr;
+    for (pair<pair <node*, node*>, float> nodePair_Length: this->directed_edge_length_map) {
+        pair <node*, node*> edge = nodePair_Length.first;
+        t_curr = nodePair_Length.second;
+        // estimate 1 + (q_xx)*(t_curr)
+        float max_val = 0;
+        for (int x = 0; x < 4; x++) {
+            if (max_val < abs(Q(x,x)*t_curr)) {
+                max_val = abs(Q(x,x)*t_curr);
+            }
+        }
+        cout << "Maximum value of (q_xx)*(t_curr) is" << max_val << endl;
+    }
+}
+
+void tree::Root_unrooted_tree() {
     node * l;
     if (this->verbose) {
         if (this->Contains_node("EPI_ISL_1208981")) {
@@ -1671,6 +1689,9 @@ void fastLK_overview::Run_workflow(string workflow_type){
         this->T->Compute_loglikelihood_using_fast_pruning_algorithm();
         // cout << "Completed computing log-likelihood score" << endl;
         cout << "log likelihood score computed using fast pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
+        cout << "Optimizing branch lengths of fully labeled tree" << endl;
+        this->T->OptimizeBranchLengths();
+    
     } else if (workflow_type == "verbose") {        
         this->T->verbose_combining_genome_ref_elements();
     }    
