@@ -16,7 +16,7 @@
 #include <numeric>
 #include <chrono>
 // #include <boost/algorithm/string/replace.hpp>
-using namespace Eigen;
+// using namespace Eigen;
 // using namespace std;
 
 // global variables
@@ -59,7 +59,7 @@ public:
     int degree = 0;
     int in_degree = 0;
     int out_degree = 0;
-    int times_visited = 0;  
+    int times_visited = 0;     
     std::string concatenated_descendant_names = "";
     bool leaf = false;
     bool empty_genome_list = true;
@@ -169,12 +169,16 @@ public:
     void Compress_sequences();
     void Add_ref_nuc_counts_based_on_genome_coordinates();
     std::map <unsigned int, std::array <unsigned int, 4>> cum_ref_nuc_counts_map; // store interval counts of a, c, g, t
+    // store mutations counts for each branch (branches with zero mutations are not stored)
+    // index order of mutation counts in array: aa, tt, cc, gg, at, ac, ag, ta, tc, tg, ca, ct, cg, ga, gt, gc
+    std::map <std::pair<node*, node*>, std::array <int,16>> branch2mutation_count;
     std::vector <int> character_pattern_weights;
     void Set_model_parameters();
     void Set_pi_rho_using_ref_seq();
     void Optimize_UNREST();
     void Optimize_branch_lengths();
-    float Compute_scaling_factor(Matrix4f Q);    
+    Eigen::Matrix4f Get_count_matrix(node * p, node * c);
+    float Compute_scaling_factor(Eigen::Matrix4f Q);    
     void Read_reference_sequence();
     void Compute_loglikelihood_using_standard_pruning_algorithm();    
     void Compute_loglikelihood_using_fast_pruning_algorithm();
@@ -186,15 +190,14 @@ public:
     node * Get_node(std::string node_name);
     bool Contains_node(std::string node_name);
     void Add_undirected_edge(node * u, node * v, float length);
-    void Add_directed_edge(node * u, node * v, float length);
-    void OptimizeBranchLengths();
+    void Add_directed_edge(node * u, node * v, float length);    
     std::vector <node *> nodes_for_postorder_traversal;
     float Get_undirected_edge_length(node * u, node * v);
     float Get_directed_edge_length(node * p, node * c);
     void Reset_log_scaling_factors_and_clvs();
     std::map <std::pair <node *, node *>, float> undirected_edge_length_map;
     std::map <std::pair <node *, node *>, float> directed_edge_length_map;
-    Matrix4f Q;
+    Eigen::Matrix4f Q;
     void Update_list_elements(node* parent, node * left_child, node * right_child, genome_list_elem * list_elem_parent, genome_list_elem * list_elem_left_child, genome_list_elem * list_elem_right_child);
     void Combine_ref_type_list_elements(node * n);
     void Compute_log_likelihood_score_for_tree_using_genome_list();
@@ -220,20 +223,63 @@ public:
 };
 
 
-void tree::OptimizeBranchLengths() {
+Eigen::Matrix4f tree::Get_count_matrix(node * p, node * c) {
+    using namespace std;
+    int ind_parent = 0;
+    int ind_child = 0;
+    int total_elements_parent = p->genome_list.size();
+    int total_elements_child = c->genome_list.size();
+    Eigen::Matrix4f Count_matrix;
+    int n_pos_smaller;
+    int n_pos_diff;
+    genome_list_elem * lep;    
+    genome_list_elem * lec;
+    while (ind_parent < total_elements_parent-1 && ind_child < total_elements_child) {        
+        lep = p->genome_list[ind_parent];
+        lec = c->genome_list[ind_parent];
+        n_pos_diff = lep->n_pos - lec->n_pos;
+        if (n_pos_diff < 0) {
+            n_pos_smaller = lep->n_pos;
+            n_pos_diff *= -1;
+            ind_parent ++;
+        } else {
+            n_pos_smaller = lec->n_pos;
+            ind_child ++;
+        } // continue from here
+        // Discuss with Nicola about using MAT trees (for estimating UNREST as well as optimizing branch lengths)        
+        if (lep->dna == lec->dna) {
+
+
+        } else if (lep->dna != lec->dna && lep->dna < 4 && lec->dna) { // mismatch 
+
+        }
+    }
+    return (Count_matrix);
+}
+
+void tree::Optimize_branch_lengths() {
     float t_curr;
+    float max_val = 0;
+    node * p; node * c;
+    std::pair <node*, node*> edge ;
+    std::vector <int> counts;
+    Eigen::Matrix4f count_matrix;
     for (std::pair<std::pair <node*, node*>, float> nodePair_Length: this->directed_edge_length_map) {
-        std::pair <node*, node*> edge = nodePair_Length.first;
+        edge = nodePair_Length.first;
         t_curr = nodePair_Length.second;
-        // estimate 1 + (q_xx)*(t_curr)
-        float max_val = 0;
+        p = edge.first;
+        c = edge.second;
+        
+        // Max value of  1 + (q_xx)*(t_curr) is 1.002 for 
+        // Estimate n_xx and n_xy
+
         for (int x = 0; x < 4; x++) {
             if (max_val < abs(Q(x,x)*t_curr)) {
                 max_val = abs(Q(x,x)*t_curr);
             }
-        }
-        std::cout << "Maximum value of (q_xx)*(t_curr) is" << max_val << std::endl;
+        }        
     }
+    std::cout << "Maximum value of (q_xx)*(t_curr) is " << max_val << std::endl;
 }
 
 void tree::Root_unrooted_tree() {
@@ -394,9 +440,9 @@ void tree::Root_tree_along_edge(node * u, node * v, float dist_from_u) {
 }
 
 void tree::Compute_loglikelihood_using_standard_pruning_algorithm() {
-    Matrix4f Q = this->Q;
-    Matrix4f Q_scaled_l; Matrix4f Q_scaled_r;
-    Matrix4f P_l; Matrix4f P_r;
+    Eigen::Matrix4f Q = this->Q;
+    Eigen::Matrix4f Q_scaled_l; Eigen::Matrix4f Q_scaled_r;
+    Eigen::Matrix4f P_l; Eigen::Matrix4f P_r;
     float t_l; float t_r;
 	float scaling_factor;
     node * c_l; node * c_r;
@@ -915,9 +961,9 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
     }
 
     // Apply pruning algorithm to genome lists
-    Matrix4f Q = this->Q;
-    Matrix4f Q_scaled_l; Matrix4f Q_scaled_r;
-    Matrix4f P_l; Matrix4f P_r;
+    Eigen::Matrix4f Q = this->Q;
+    Eigen::Matrix4f Q_scaled_l; Eigen::Matrix4f Q_scaled_r;
+    Eigen::Matrix4f P_l; Eigen::Matrix4f P_r;
     float t_l; float t_r;
 	float scaling_factor;
     node * left_child; node * right_child;
@@ -1074,15 +1120,6 @@ void tree::Compute_loglikelihood_using_fast_pruning_algorithm() {
     }        
 }
 
-void tree::Optimize_branch_lengths() {
-
-// P = I+Qt
-
-// try 
-// t = -(sum_x (sum_y (n_xy))/(sum_x(n_xx q_xx))
-
-}
-
 void tree::Set_model_parameters() {
     bool empirical = false;
     if (empirical) {
@@ -1138,8 +1175,8 @@ void tree::Set_model_parameters() {
     // this->Set_nodes_for_postorder_traversal();
 }
 
-float tree::Compute_scaling_factor(Matrix4f Q) {
-    MatrixXf Q_aug = ArrayXXf::Zero(4,5);
+float tree::Compute_scaling_factor(Eigen::Matrix4f Q) {
+    Eigen::MatrixXf Q_aug = Eigen::ArrayXXf::Zero(4,5);
 	for (int row = 0; row < 4; row++){
 		for (int col = 0; col < 4; col++){
 			Q_aug(row, col) = Q(row, col);
@@ -1148,12 +1185,12 @@ float tree::Compute_scaling_factor(Matrix4f Q) {
 	for (int row = 0; row < 4; row++){
 		Q_aug(row, 4) = 1;
 	}	
-	MatrixXf b = ArrayXXf::Zero(5,1);
+	Eigen::MatrixXf b = Eigen::ArrayXXf::Zero(5,1);
 	for (int row = 0; row < 4; row++){
 		b(row,0) = 0;
 	}
 	b(4,0) = 1;	
-	MatrixXf pi = ArrayXXf::Zero(1,4);
+	Eigen::MatrixXf pi = Eigen::ArrayXXf::Zero(1,4);
 	pi = Q_aug.transpose().colPivHouseholderQr().solve(b).transpose();
 	float scalingFactor = 0;
 	for (int i = 0; i < 4; i++){
@@ -1701,9 +1738,9 @@ void fastLK_overview::Run_workflow(std::string workflow_type){
         // std::cout << "Computing log-likelihood using fast pruning algorithm" << std::endl;
         this->T->Compute_loglikelihood_using_fast_pruning_algorithm();
         // cout << "Completed computing log-likelihood score" << endl;
-        cout << "log likelihood score computed using fast pruning algorithm is " << setprecision(8) << this->T->log_likelihood << endl;
-        cout << "Optimizing branch lengths of fully labeled tree" << endl;
-        this->T->OptimizeBranchLengths();
+        std::cout << "log likelihood score computed using fast pruning algorithm is " << std::setprecision(8) << this->T->log_likelihood << std::endl;
+        std::cout << "Optimizing branch lengths of fully labeled tree" << std::endl;
+        this->T->Optimize_branch_lengths();
     
     } else if (workflow_type == "verbose") {        
         this->T->verbose_combining_genome_ref_elements();
