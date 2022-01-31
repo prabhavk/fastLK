@@ -1,5 +1,5 @@
 #ifndef FASTLK_H
-#define FASTLH_H
+#define FASTLK_H
 #include <vector>
 #include <memory>
 #include <map>
@@ -10,11 +10,12 @@
 #include <iomanip>
 #include <regex>
 #include <eigen3/Eigen/Dense>
+//#include <eigen3/Eigen/Dense>
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <numeric>
-#include <chrono>
+// #include <chrono>
 // #include <boost/algorithm/string/replace.hpp>
 // using namespace Eigen;
 // using namespace std;
@@ -174,9 +175,11 @@ public:
     std::map <std::pair<node*, node*>, std::array <int,16>> branch2mutation_count;
     std::vector <int> character_pattern_weights;
     void Set_model_parameters();
-    void Set_pi_rho_using_ref_seq();
+    void Optimize_model_parameters();
     void Optimize_UNREST();
     void Optimize_branch_lengths();
+    std::array <float,11> Get_free_params_of_UNREST(Eigen::Matrix4f Q_UNREST);
+    void Set_pi_rho_using_ref_seq();
     Eigen::Matrix4f Get_count_matrix(node * p, node * c);
     float Compute_scaling_factor(Eigen::Matrix4f Q);    
     void Read_reference_sequence();
@@ -255,31 +258,6 @@ Eigen::Matrix4f tree::Get_count_matrix(node * p, node * c) {
         }
     }
     return (Count_matrix);
-}
-
-void tree::Optimize_branch_lengths() {
-    float t_curr;
-    float max_val = 0;
-    node * p; node * c;
-    std::pair <node*, node*> edge ;
-    std::vector <int> counts;
-    Eigen::Matrix4f count_matrix;
-    for (std::pair<std::pair <node*, node*>, float> nodePair_Length: this->directed_edge_length_map) {
-        edge = nodePair_Length.first;
-        t_curr = nodePair_Length.second;
-        p = edge.first;
-        c = edge.second;
-        
-        // Max value of  1 + (q_xx)*(t_curr) is 1.002 for 
-        // Estimate n_xx and n_xy
-
-        for (int x = 0; x < 4; x++) {
-            if (max_val < abs(Q(x,x)*t_curr)) {
-                max_val = abs(Q(x,x)*t_curr);
-            }
-        }        
-    }
-    std::cout << "Maximum value of (q_xx)*(t_curr) is " << max_val << std::endl;
 }
 
 void tree::Root_unrooted_tree() {
@@ -1175,6 +1153,40 @@ void tree::Set_model_parameters() {
     // this->Set_nodes_for_postorder_traversal();
 }
 
+void tree::Optimize_model_parameters(){
+    this->Optimize_UNREST();
+    this->Optimize_branch_lengths();
+}
+
+void tree::Optimize_UNREST(){
+    // BFGS
+}
+
+void tree::Optimize_branch_lengths() {
+    float t_curr;
+    float max_val = 0;
+    node * p; node * c;
+    std::pair <node*, node*> edge ;
+    std::vector <int> counts;
+    Eigen::Matrix4f count_matrix;
+    for (std::pair<std::pair <node*, node*>, float> nodePair_Length: this->directed_edge_length_map) {
+        edge = nodePair_Length.first;
+        t_curr = nodePair_Length.second;
+        p = edge.first;
+        c = edge.second;
+        
+        // Max value of  1 + (q_xx)*(t_curr) is 1.002 for 
+        // Estimate n_xx and n_xy
+
+        for (int x = 0; x < 4; x++) {
+            if (max_val < abs(Q(x,x)*t_curr)) {
+                max_val = abs(Q(x,x)*t_curr);
+            }
+        }        
+    }
+    std::cout << "Maximum value of (q_xx)*(t_curr) is " << max_val << std::endl;
+}
+
 float tree::Compute_scaling_factor(Eigen::Matrix4f Q) {
     Eigen::MatrixXf Q_aug = Eigen::ArrayXXf::Zero(4,5);
 	for (int row = 0; row < 4; row++){
@@ -1225,7 +1237,7 @@ void tree::Populate_DNA_to_char_map() {
 
 void tree::Add_node(std::string u_name) {
     node * u = new node(u_name);
-    this->node_list.insert(std::pair<std::string,node *>(u_name,u));
+    this->node_list.insert(std::pair<std::string,node *>(u_name,u)); 
     if (this->verbose) {
         std::cout << "Added node " << u->name << std::endl;
     }
@@ -1590,7 +1602,6 @@ void tree::Add_mut_diff_sequences() {
                     delete list_elem_ref;                    
                 }
             }
-
             n->genome_list.push_back(list_elem_diff);
             n->empty_genome_list = false;
             if (list_elem_diff->start_pos + list_elem_diff->n_pos - 1 < GENOME_LENGTH) {
@@ -1650,7 +1661,7 @@ public:
     tree * T;
     void Run_workflow(std::string workflow_type);
     fastLK_overview(std::string path_to_reference_file, std::string path_to_mut_diff_file, std::string path_to_sequence_alignment_file, std::string path_to_tree_file, std::string path_to_log_file, std::string workflow_type, float clv_threshold, bool verbose_flag_bool){        
-        std::chrono::system_clock::time_point start_time = std::chrono::high_resolution_clock::now();		        
+        // std::chrono::system_clock::time_point start_time = std::chrono::high_resolution_clock::now();		        
         this->T = new tree;
         this->T->tree_file_name = path_to_tree_file;
         this->T->alignment_file_name = path_to_sequence_alignment_file;
@@ -1677,9 +1688,9 @@ public:
         //workflow_type = "standard"; 
         this->Run_workflow(this->T->workflow_type);
         // std::cout << "workflow type is " << this->T->workflow_type << std::endl;
-        std::chrono::system_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-        std::cout << "Total CPU time used is " << std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time).count() << " second(s)\n";		
-        this->T->log_file << "Total CPU time used is " << std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time).count() << " second(s)\n";
+        // std::chrono::system_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+        // std::cout << "Total CPU time used is " << std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time).count() << " second(s)\n";		
+        // this->T->log_file << "Total CPU time used is " << std::chrono::duration_cast<std::chrono::seconds>(end_time-start_time).count() << " second(s)\n";
         this->T->log_file.close();
     }
 
@@ -1722,7 +1733,7 @@ void fastLK_overview::Run_workflow(std::string workflow_type){
             std::cout << "Computing log-likelihood using standard approach" << std::endl;      
         }
         this->T->Compute_loglikelihood_using_standard_pruning_algorithm();        
-        std::cout << "log likelihood score computed using standard pruning algorithm is " << std::setprecision(8) << this->T->log_likelihood << std::endl;
+        std::cout << "Log likelihood score computed using standard pruning algorithm is " << std::setprecision(8) << this->T->log_likelihood << std::endl;
     } else if (workflow_type == "mut_diff") {
         // std::cout << "Setting descendant names" << std::endl;
         // this->T->Set_descendant_names();
@@ -1739,25 +1750,10 @@ void fastLK_overview::Run_workflow(std::string workflow_type){
         this->T->Compute_loglikelihood_using_fast_pruning_algorithm();
         // cout << "Completed computing log-likelihood score" << endl;
         std::cout << "log likelihood score computed using fast pruning algorithm is " << std::setprecision(8) << this->T->log_likelihood << std::endl;
-        std::cout << "Optimizing branch lengths of fully labeled tree" << std::endl;
-        this->T->Optimize_branch_lengths();
-    
     } else if (workflow_type == "verbose") {        
         this->T->verbose_combining_genome_ref_elements();
     }    
     }
 
-    // ************************************************ //
-    // Compute log likelihood for GTR rate matrix using //
-    // standard Felsenstein's pruning algorithm         //
-    // ************************************************ //
-
-    // std::cout << "Log likelihood score computing using standard pruning algorithm is " << std::setprecisionecision(8) << this->T->log_likelihood << std::endl;
-
-
-    // ************************************************ //
-    // Compute log likelihood for GTR rate matrix using //
-    // approximate Felsenstein's pruning algorithm      //
-    // ************************************************ //
 
 #endif
